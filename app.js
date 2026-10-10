@@ -13,6 +13,7 @@ const ui = {
   trialSubmit: $("trialSubmit"), trialSum: $("trialSum"), lockTrial: $("lockTrial"),
   feedback: $("feedback"), keySource: $("keySource"), fbSum: $("fbSum"), fbTable: $("fbTable"),
   fbLead: $("fbLead"), fbDiffN: $("fbDiffN"), fbSameN: $("fbSameN"),
+  fbScope: $("fbScope"), fbDiffBlock: $("fbDiffBlock"), fbAllBlock: $("fbAllBlock"), fbAll: $("fbAll"),
   calibRows: $("calibRows"), calibSummary: $("calibSummary"), calibBy: $("calibBy"),
   calibHint: $("calibHint"), toMain: $("toMain"),
   work: $("work"), qPos: $("qPos"), qMeta: $("qMeta"), qText: $("qText"),
@@ -275,6 +276,106 @@ function trialCompare() {
              title: r.title || "", same: !!ref && a.v === ref };
   });
 }
+// 线索词高亮：词表取自《编码手册（第二版）》第四节"常见语言特征"
+const CUES = [
+  { move: "M1背景", ex: "近年／已有研究表明／然而／尚缺乏", re:
+    /(In recent years|in recent years|has been reported|little is known|近年来|近年|已有研究表明|尚缺乏|研究较少|However|however)/g },
+  { move: "M2目的", ex: "旨在／为探究／为…/本研究／aim／objective", re:
+    /(旨在|为探究|为了解|为探讨|本研究|本文以|This study (?:was|aims|aimed)|was conducted to|we investigated|aims? to|objective)/g },
+  { move: "M3方法", ex: "以…为材料／采用／随机区组／测定", re:
+    /(以[^，。；]{0,12}为材料|采用|随机区组|测定|分离纯化|were determined by|was carried out|were measured|were analyzed|using)/g },
+  { move: "M4结果", ex: "结果表明／显著高于／results showed", re:
+    /(结果表明|结果显示|分析结果表明|显著高于|显著低于|分别达到|The results showed|the results showed|results showed|was significantly (?:higher|lower)|were significantly (?:higher|lower))/g },
+  { move: "M5结论", ex: "表明／说明／可为…提供／suggest／indicate", re:
+    /(阐明了|表明|说明|可为[^，。；]{0,12}提供|提供了|有望|有待进一步|Taken together|In conclusion|as a conclusion|suggest|indicate|provides? a)/g },
+];
+function markCues(text) {
+  const t = String(text || "");
+  const hits = [];
+  CUES.forEach((c) => {
+    c.re.lastIndex = 0;
+    let m;
+    while ((m = c.re.exec(t))) {
+      if (!m[0]) break;
+      hits.push({ s: m.index, e: m.index + m[0].length, move: c.move, ex: c.ex });
+    }
+  });
+  hits.sort((a, b) => a.s - b.s || (b.e - b.s) - (a.e - a.s));
+  let last = -1, out = "", pos = 0;
+  hits.forEach((h) => {
+    if (h.s < last) return;
+    last = h.e;
+    out += esc(t.slice(pos, h.s)) + '<mark class="cue" title="' + esc(h.move + " 线索：" + h.ex) +
+      '">' + esc(t.slice(h.s, h.e)) + "</mark>";
+    pos = h.e;
+  });
+  return out + esc(t.slice(pos));
+}
+let fbScope = "diff";                 // diff=只看分歧句 | all=逐句看全部
+function fbCardHtml(r, withInput) {
+  return '<div class="fbcard' + (r.same ? " ok" : "") + '" data-sid="' + esc(r.sid) + '">' +
+    '<div class="fbc-head"><span class="mono sid">' + esc(r.sid) + "</span>" +
+    '<span class="muted small">' + esc(r.group) + " ｜ " + esc(r.journal) + " ｜ 第 " +
+    esc(String(r.seq)) + " 句</span>" +
+    (r.same ? '<span class="chip ok">一致</span>' : '<span class="chip bad">不一致</span>') + "</div>" +
+    '<p class="fbc-text">' + markCues(r.text) + "</p>" +
+    '<div class="fbc-cmp">' +
+    '<div class="cmpbox"><span class="lbl">你的判读</span><b>' + esc(r.mine || "（未填）") + "</b></div>" +
+    '<div class="cmpbox ref"><span class="lbl">参考答案</span><b>' + esc(r.ref) + "</b></div></div>" +
+    '<div class="fbc-basis"><span class="lbl">《编码手册》依据</span>' + esc(r.basis) + "</div>" +
+    (r.note ? '<div class="fbc-note"><span class="lbl">你的备注</span>' + esc(r.note) + "</div>" : "") +
+    (withInput
+      ? '<label class="fbc-fix" for="calib-' + esc(r.sid) + '">谈定的口径（可写「仍存疑」）</label>' +
+        '<input id="calib-' + esc(r.sid) + '" type="text" placeholder="' +
+        "写一句你和另一位同学谈定的口径；若仍拿不准就写「仍存疑」" + '" value="' +
+        esc(state.calib.rows[r.sid] || "") + '">'
+      : "") + "</div>";
+}
+function wireCalibInputs(root) {
+  root.querySelectorAll("input").forEach((inp) => {
+    inp.addEventListener("input", () => {
+      state.calib.rows[inp.id.replace("calib-", "")] = inp.value;
+      calibChanged();
+    });
+  });
+}
+function renderFeedback() {
+  const rows = trialCompare();
+  const same = rows.filter((r) => r.same);
+  const diff = rows.filter((r) => !r.same);
+  ui.fbDiffN.textContent = String(diff.length);
+  ui.fbSameN.textContent = String(same.length);
+  ui.fbLead.innerHTML = diff.length
+    ? "共 " + rows.length + " 句试标，你的判读与参考答案有 <strong>" + diff.length +
+      " 句</strong>不同。下面默认只列这 " + diff.length + " 句（含句子全文与《编码手册》依据）；" +
+      "要逐句过全部 " + rows.length + " 句，点上面的「逐句看全部」。"
+    : "本次试标 " + rows.length + " 句全部一致，没有分歧句——直接写下面的《校准记录》即可进入正式标注。";
+  // 两个视图只渲染其中一个，避免同名输入框重复
+  if (fbScope === "all") {
+    ui.fbAll.innerHTML = rows.map((r) => fbCardHtml(r, !r.same)).join("");
+    ui.calibRows.innerHTML = "";
+    ui.fbTable.innerHTML = "";
+  } else {
+    ui.calibRows.innerHTML = diff.length
+      ? diff.map((r) => fbCardHtml(r, true)).join("")
+      : '<p class="hint">本次试标全部一致，无分歧句。</p>';
+    let h = "<thead><tr><th>试标ID</th><th>你的判读 ＝ 参考答案</th>" +
+            "<th>《编码手册》依据</th></tr></thead><tbody>";
+    same.forEach((r) => {
+      h += '<tr class="same"><td class="mono">' + esc(r.sid) + "</td><td>" + esc(r.mine) +
+        '</td><td class="small">' + esc(r.basis) + "</td></tr>";
+    });
+    ui.fbTable.innerHTML = h + "</tbody>";
+    ui.fbAll.innerHTML = "";
+  }
+  wireCalibInputs(ui.calibRows);
+  wireCalibInputs(ui.fbAll);
+  ui.fbScope.querySelectorAll(".segbtn").forEach((b) => {
+    b.classList.toggle("on", b.getAttribute("data-scope") === fbScope);
+  });
+  ui.fbDiffBlock.hidden = fbScope !== "diff";
+  ui.fbAllBlock.hidden = fbScope !== "all";
+}
 function showFeedback() {
   phase = "feedback";
   hide(ui.work); hide(ui.trialSubmit); hide(ui.finish); hide(ui.export);
@@ -288,48 +389,7 @@ function showFeedback() {
     "（" + Math.round(same.length / rows.length * 1000) / 10 + "%）") +
     row("需要讨论的不一致句", diff.length + " 句") +
     row("试标锁定时间", new Date(state.trialLockedAt).toLocaleString());
-  ui.fbDiffN.textContent = String(diff.length);
-  ui.fbSameN.textContent = String(same.length);
-  ui.fbLead.innerHTML = diff.length
-    ? "共 " + rows.length + " 句试标，你的判读与参考答案有 <strong>" + diff.length +
-      " 句</strong>不同——下面按句号一张一张列好了（含句子全文与《编码手册》依据）。" +
-      "校准会只讨论这 " + diff.length + " 句，不需要逐句过全部 20 句。"
-    : "本次试标 20 句全部一致，没有分歧句——直接写下面的《校准记录》即可进入正式标注。";
-  // ① 分歧句卡片：句子全文 + 对照 + 依据 + 口径输入
-  let c = "";
-  diff.forEach((r) => {
-    c += '<div class="fbcard" data-sid="' + esc(r.sid) + '">' +
-      '<div class="fbc-head"><span class="mono sid">' + esc(r.sid) + "</span>" +
-      '<span class="muted small">' + esc(r.group) + " ｜ " + esc(r.journal) + " ｜ 第 " +
-      esc(String(r.seq)) + ' 句</span><span class="chip bad">不一致</span></div>' +
-      '<p class="fbc-text">' + esc(r.text) + "</p>" +
-      '<div class="fbc-cmp">' +
-      '<div class="cmpbox"><span class="lbl">你的判读</span><b>' +
-      esc(r.mine || "（未填）") + "</b></div>" +
-      '<div class="cmpbox ref"><span class="lbl">参考答案</span><b>' + esc(r.ref) +
-      "</b></div></div>" +
-      '<div class="fbc-basis"><span class="lbl">《编码手册》依据</span>' + esc(r.basis) + "</div>" +
-      (r.note ? '<div class="fbc-note"><span class="lbl">你的备注</span>' + esc(r.note) + "</div>" : "") +
-      '<label class="fbc-fix" for="calib-' + esc(r.sid) + '">谈定的口径（可写「仍存疑」）</label>' +
-      '<input id="calib-' + esc(r.sid) + '" type="text" placeholder="' +
-      "写一句你和另一位同学谈定的口径；若仍拿不准就写「仍存疑」" + '" value="' +
-      esc(state.calib.rows[r.sid] || "") + '"></div>';
-  });
-  ui.calibRows.innerHTML = c || '<p class="hint">本次试标全部一致，无分歧句。</p>';
-  ui.calibRows.querySelectorAll("input").forEach((inp) => {
-    inp.addEventListener("input", () => {
-      state.calib.rows[inp.id.replace("calib-", "")] = inp.value;
-      calibChanged();
-    });
-  });
-  // ② 一致句：紧凑表，省略备注列
-  let h = "<thead><tr><th>试标ID</th><th>你的判读 ＝ 参考答案</th>" +
-          "<th>《编码手册》依据</th></tr></thead><tbody>";
-  same.forEach((r) => {
-    h += '<tr class="same"><td class="mono">' + esc(r.sid) + "</td><td>" + esc(r.mine) +
-      '</td><td class="small">' + esc(r.basis) + "</td></tr>";
-  });
-  ui.fbTable.innerHTML = h + "</tbody>";
+  renderFeedback();
   ui.calibSummary.value = state.calib.summary || "";
   ui.calibBy.value = state.calib.by || role || "";
   calibChanged();
@@ -496,6 +556,12 @@ function bindOnce() {
   if (bound) return;
   bound = true;
   ui.lockTrial.addEventListener("click", lockTrial);
+  ui.fbScope.addEventListener("click", (e) => {
+    const b = e.target.closest(".segbtn");
+    if (!b) return;
+    fbScope = b.getAttribute("data-scope") || "diff";
+    renderFeedback();
+  });
   ui.toMain.addEventListener("click", enterMain);
   ui.calibSummary.addEventListener("input", calibChanged);
   ui.calibBy.addEventListener("input", calibChanged);

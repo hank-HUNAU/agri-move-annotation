@@ -56,12 +56,24 @@
     <p class="muted small" id="keySource"></p>
     <div id="fbSum" class="kv"></div>
     <p id="fbLead"></p>
-    <h2 class="h2">① 需要讨论的 <span id="fbDiffN" class="mono">0</span> 句（校准会重点）</h2>
-    <p class="hint">每张卡给出句子全文、《编码手册》依据，以及一个口径输入框；两人谈定后写进框里（也可写「仍存疑」）。</p>
-    <div id="calibRows" class="fbcards"></div>
-    <h2 class="h2">② 与你判读一致的句子（<span id="fbSameN" class="mono">0</span> 句）</h2>
-    <p class="hint">这些句子不必讨论，展开核对一眼即可。</p>
-    <div class="tblwrap"><table id="fbTable" class="fbtable"></table></div>
+    <div class="seg" id="fbScope">
+      <button type="button" class="segbtn on" data-scope="diff">只看分歧句（<span id="fbDiffN" class="mono">0</span>）</button>
+      <button type="button" class="segbtn" data-scope="all">逐句看全部 20 句</button>
+    </div>
+    <div id="fbDiffBlock">
+      <h2 class="h2">需要讨论的分歧句（校准会重点）</h2>
+      <p class="hint">每张卡给出句子全文（<mark class="cue">加粗</mark>＝《编码手册》里的典型线索词，鼠标悬停可看属哪一类）、
+         《编码手册》依据，以及一个口径输入框；两人谈定后写进框里（也可写「仍存疑」）。</p>
+      <div id="calibRows" class="fbcards"></div>
+      <h2 class="h2">与你判读一致的句子（<span id="fbSameN" class="mono">0</span> 句）</h2>
+      <p class="hint">这些句子不必讨论，展开核对一眼即可。</p>
+      <div class="tblwrap"><table id="fbTable" class="fbtable"></table></div>
+    </div>
+    <div id="fbAllBlock" hidden>
+      <h2 class="h2">全部 20 句（按试标ID顺序）</h2>
+      <p class="hint">供校准会逐句过一遍：标「不一致」的卡里仍可填口径，标「一致」的只作核对。</p>
+      <div id="fbAll" class="fbcards"></div>
+    </div>
     <h2 class="h2">校准记录（填写后方可进入正式标注）</h2>
     <div class="field">
       <label for="calibSummary">本次校准会谈定的规则（必填，建议写清"哪类句子算哪一类"）</label>
