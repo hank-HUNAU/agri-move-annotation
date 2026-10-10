@@ -127,6 +127,14 @@ kbd{background:#fff; border:1px solid var(--line); border-bottom-width:2px; bord
 .chipbtn{border:1px solid var(--line); background:#fff; color:#3c4453; border-radius:999px;
   padding:3px 10px; font-size:12.5px; cursor:pointer}
 .chipbtn:hover{border-color:#c9d3e4; background:#f7f9fc}
+/* 备注用法对照表（默认收起，点摘要展开；不占地方） */
+.notehelp{margin:2px 0 8px}
+.notehelp summary{cursor:pointer; color:var(--brand); font-size:12.8px}
+.notehelp[open] summary{margin-bottom:6px}
+.notehelp table{width:100%; border-collapse:collapse; font-size:12.5px; margin:6px 0}
+.notehelp th,.notehelp td{border:1px solid var(--line); padding:5px 7px; text-align:left; vertical-align:top}
+.notehelp th{background:#f7f9fc; font-weight:600; white-space:nowrap}
+.notehelp code{background:#f2f5fa; padding:0 3px; border-radius:3px; font-size:12px}
 /* 自动保存回执 */
 #saveStamp{margin-right:auto}
 /* 交回清单 */

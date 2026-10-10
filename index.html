@@ -114,12 +114,47 @@
             <label for="note">备注<span class="muted small" id="noteReq"></span></label>
             <div class="chips" id="noteChips">
               <button type="button" class="chipbtn" data-note="方法＋结果同句">方法＋结果同句</button>
+              <button type="button" class="chipbtn" data-note="目的＋方法同句">目的＋方法同句</button>
               <button type="button" class="chipbtn" data-note="结果与结论难分">结果与结论难分</button>
               <button type="button" class="chipbtn" data-note="背景与目的难分">背景与目的难分</button>
               <button type="button" class="chipbtn" data-note="含结构化摘要小标题">含结构化摘要小标题</button>
               <button type="button" class="chipbtn" data-note="疑非摘要内容">疑非摘要内容</button>
               <button type="button" class="chipbtn" data-note="表述不完整／截断">表述不完整／截断</button>
             </div>
+            <details class="notehelp">
+              <summary>备注怎么用？（点这里看对照表）</summary>
+              <p class="hint"><b>必须写备注的 3 种情况：</b>① 选「UN无法判定」（平台要求写明理由）；
+                ② 一句里含两种以上功能、你只填了主要标签；③ 事后修改过已填内容。</p>
+              <table>
+                <thead><tr><th>快捷语</th><th>什么时候点（看迹象）</th><th>标签怎么选＋备注写什么</th></tr></thead>
+                <tbody>
+                  <tr><td>方法＋结果同句</td>
+                      <td>前半是操作方法（采用／测定／分离纯化），后半给数据或鉴定结果</td>
+                      <td>按语义重心：主句在操作→<b>M3方法</b>；在报告发现→<b>M4结果</b>；备注写「含方法成分／含结果成分」</td></tr>
+                  <tr><td>目的＋方法同句</td>
+                      <td>句首「为了解／为探讨／旨在……」，但主句交代了材料与操作方法（采用／利用／测定）</td>
+                      <td>判 <b>M3方法</b>，备注写「含目的成分」；若只说要测什么、没给材料与方法→<b>M2目的</b></td></tr>
+                  <tr><td>结果与结论难分</td>
+                      <td>在报告数据，但带解释性词：表明／说明／可能与……有关／suggest／indicate／could be used as…</td>
+                      <td>报告事实→<b>M4结果</b>；在作评价推断→<b>M5结论</b>；备注写「按语义重心判 M4／M5」</td></tr>
+                  <tr><td>背景与目的难分</td>
+                      <td>前半陈述现状（研究较少／是重要限制因子），后半「本研究旨在……」</td>
+                      <td>谓语指向目的→<b>M2目的</b>；只述现状→<b>M1背景</b>；备注写「前半为背景、后半为目的」</td></tr>
+                  <tr><td>含结构化摘要小标题</td>
+                      <td>句首带 <code>Background:</code>／<code>Methods:</code>／<code>(1) Results:</code>／「目的：」</td>
+                      <td><b>按内容判，不按小标题</b>（手册第六节规则④）；备注写「含小标题，按内容判」</td></tr>
+                  <tr><td>疑非摘要内容</td>
+                      <td>与摘要无关的语句：作者贡献／利益冲突／<code>Supplementary data is available…</code>／征订套话</td>
+                      <td>整句是套话→<b>NR非研究性</b>；夹在研究句里→按主功能判；备注写「非摘要正文」</td></tr>
+                  <tr><td>表述不完整／截断</td>
+                      <td>句子以「…／……」结尾且语义不完整，或明显缺字（源导出件被截断）</td>
+                      <td>能判主要功能就判；判不了→<b>UN无法判定</b>；备注写「源文本截断」＋你据此判了什么</td></tr>
+                </tbody>
+              </table>
+              <p class="hint"><b>别这样用：</b>拿不准就选 UN无法判定（不要用「疑非摘要内容」代替）；
+                不必每句都写备注，备注留给边界句；尽量用这 7 个<b>标准说法</b>（报告要统计原因分布，
+                同义变体会统计不上）。快捷语可连点多个，也能在它后面补自己的话。</p>
+            </details>
             <textarea id="note" rows="2" placeholder="可选。填「UN无法判定」时必须写明为什么拿不准。"></textarea>
           </div>
           <div class="actions">
