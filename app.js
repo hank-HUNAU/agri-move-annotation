@@ -288,9 +288,10 @@ function firstUnanswered(list, map) {
 }
 function startMain() {
   ui.trialDone.hidden = true;
-  ui.work.hidden = false;
   const i = firstUnanswered(payload.sentences, state.main);
-  curIdx = i < 0 ? 0 : i;
+  if (i < 0) { finishMain(); return; }   // 已全部答完 → 直接进提交页，不必重走 472 句
+  ui.work.hidden = false;
+  curIdx = i;
   enterCurrent();
   renderQuestion();
 }
