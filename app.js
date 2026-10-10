@@ -226,6 +226,7 @@ function renderTop() {
 }
 function renderQuestion() {
   const list = currentList(), rec = list[curIdx];
+  if (!rec) return;                       // 竞态保护：题库未就绪时不做无意义渲染
   const map = currentMap();
   const ans = map[rec.sid] || (map[rec.sid] = blankAns());
   ans.t0 = ans.t0 || now();
@@ -276,7 +277,8 @@ function onPick(code) {
   if (code === "UN无法判定") ui.note.focus();
 }
 function noteChanged() {
-  const ans = currentMap()[currentList()[curIdx].sid];
+  const rec = currentList()[curIdx];
+  const ans = rec ? currentMap()[rec.sid] : null;
   if (!ans) return;
   if ((ans.n || "") !== ui.note.value) { ans.ne = (ans.ne || 0) + 1; ans.n = ui.note.value; }
   updateNav(); save();
@@ -296,13 +298,15 @@ function updateNav() {
   ui.nextBtn.textContent = last ? (phase === "trial" ? "完成试标 →" : "完成标注 →") : "下一句 →";
 }
 function leaveCurrent() {
-  const a = currentMap()[currentList()[curIdx].sid];
+  const rec = currentList()[curIdx];
+  const a = rec ? currentMap()[rec.sid] : null;
   if (!a) return;
   a.t1 = now();
   if (a.enterAt) { a.d = (a.d || 0) + (a.t1 - a.enterAt); a.enterAt = 0; }
 }
 function enterCurrent() {
-  const a = currentMap()[currentList()[curIdx].sid];
+  const rec = currentList()[curIdx];
+  const a = rec ? currentMap()[rec.sid] : null;
   if (a) a.enterAt = now();
 }
 function goNext() {
