@@ -1,0 +1,120 @@
+:root{
+  --bg:#f5f6f8; --card:#fff; --ink:#1c2230; --muted:#6b7484; --line:#e3e6ec;
+  --brand:#1f6feb; --brand-ink:#fff; --ok:#127a4b; --warn:#b45309; --err:#b42318;
+  --mark:#fff3bf; --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.65 "Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  position:sticky; top:0; z-index:20; background:rgba(255,255,255,.96);
+  backdrop-filter:saturate(1.4) blur(6px); border-bottom:1px solid var(--line);
+  padding:10px 20px 0;
+}
+.brand{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.brand strong{font-size:17px}
+.sub,.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.mono{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace; font-size:12.5px; color:var(--muted)}
+.topmeta{display:flex; align-items:center; gap:10px; margin-top:4px; flex-wrap:wrap}
+.badge{
+  background:#eaf1ff; color:#12489b; border:1px solid #cddcff;
+  padding:2px 9px; border-radius:999px; font-size:12.5px; font-weight:600;
+}
+.badge.ghost{background:#f2f4f7; color:var(--muted); border-color:var(--line); font-weight:500}
+.bar{height:4px; background:#eef1f6; margin:8px -20px 0; overflow:hidden}
+.bar i{display:block; height:100%; width:0; background:linear-gradient(90deg,#1f6feb,#12b981); transition:width .25s ease}
+
+/* ---------- 布局 ---------- */
+main{max-width:1180px; margin:0 auto; padding:20px}
+.layout{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,420px); gap:18px; align-items:start}
+@media (max-width:980px){ .layout{grid-template-columns:1fr} }
+
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px; box-shadow:var(--shadow); margin-bottom:16px;
+}
+h1{font-size:20px; margin:0 0 10px}
+p{margin:.5em 0}
+
+/* ---------- 入口 ---------- */
+.roles{display:flex; gap:10px; flex-wrap:wrap}
+.rolebtn{
+  flex:1 1 150px; padding:14px; border-radius:12px; border:1.5px solid var(--line);
+  background:#fff; font-size:15px; font-weight:600; cursor:pointer; color:var(--ink);
+}
+.rolebtn[aria-pressed="true"]{border-color:var(--brand); background:#eaf1ff; color:#12489b}
+.field{margin:14px 0}
+.field label{display:block; font-weight:600; margin-bottom:6px}
+input[type=password],textarea{
+  width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px;
+  font:inherit; color:var(--ink); background:#fff;
+}
+textarea{resize:vertical}
+input:focus,textarea:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(31,111,235,.12)}
+button{font:inherit}
+button.primary{
+  background:var(--brand); color:var(--brand-ink); border:1px solid var(--brand);
+  padding:11px 18px; border-radius:10px; font-weight:600; cursor:pointer;
+}
+button.primary:disabled{opacity:.45; cursor:not-allowed}
+button.ghost{
+  background:#fff; color:var(--ink); border:1.5px solid var(--line);
+  padding:10px 16px; border-radius:10px; cursor:pointer;
+}
+button.ghost:disabled{opacity:.45; cursor:not-allowed}
+button.small{padding:5px 10px; font-size:12.5px; border-radius:8px}
+button.danger2{border-color:#f2b8b5; color:var(--err)}
+.hint{color:var(--muted); font-size:12.8px; margin-top:8px}
+.err{background:#fef3f2; border:1px solid #fecdca; color:var(--err); padding:12px 14px; border-radius:10px}
+
+/* ---------- 题目 ---------- */
+.qhead{display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap}
+.sentence{
+  font-size:17px; line-height:1.9; background:#fbfcfe; border:1px solid var(--line);
+  border-left:4px solid var(--brand); border-radius:10px; padding:14px 16px; margin:12px 0 16px;
+  white-space:pre-wrap; word-break:break-word;
+}
+.labels{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+@media (max-width:620px){ .labels{grid-template-columns:1fr} }
+.lab{
+  display:flex; gap:10px; align-items:flex-start; border:1.5px solid var(--line);
+  border-radius:10px; padding:10px 12px; cursor:pointer; background:#fff;
+}
+.lab:hover{border-color:#c9d3e4}
+.lab input{margin-top:3px; flex:0 0 auto}
+.lab.on{border-color:var(--brand); background:#eaf1ff}
+.lab .code{font-weight:700}
+.lab .desc{color:var(--muted); font-size:12.6px; display:block}
+.actions{display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap}
+.actions .hint{margin:0; flex:1 1 auto}
+.kbd{color:var(--muted); font-size:12.5px; margin:0 0 16px}
+kbd{background:#fff; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 5px; font-size:12px}
+
+/* ---------- 摘要上下文 ---------- */
+.col-ctx{position:sticky; top:96px}
+@media (max-width:980px){ .col-ctx{position:static} }
+.ctxhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px}
+.ctxbody{
+  max-height:60vh; overflow:auto; font-size:14px; line-height:1.85; color:#333b49;
+  white-space:pre-wrap; word-break:break-word;
+}
+.ctxbody.collapsed{display:none}
+.ctxbody mark{background:var(--mark); padding:2px 3px; border-radius:4px; font-weight:600}
+.ctxbody .meta{color:var(--muted); font-size:12.5px; margin-bottom:8px; display:block}
+
+/* ---------- 完成 / 交回 ---------- */
+.kv{margin:14px 0; border-top:1px dashed var(--line)}
+.kv div{display:flex; justify-content:space-between; gap:14px; padding:7px 0; border-bottom:1px dashed var(--line)}
+.kv b{font-weight:600}
+.actions.wrap{flex-wrap:wrap}
+details.danger{margin-top:18px; border-top:1px solid var(--line); padding-top:12px}
+details.danger summary{cursor:pointer; color:var(--muted); font-size:13px}
+.foot{max-width:1180px; margin:0 auto; padding:8px 20px 40px; color:var(--muted); font-size:12.5px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}

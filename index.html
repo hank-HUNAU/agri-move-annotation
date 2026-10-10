@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>语步标注平台 — 效度验证</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <strong>语步标注平台</strong>
+    <span class="sub">效度验证 · 语料库 v1.0.3</span>
+  </div>
+  <div class="topmeta">
+    <span id="roleBadge" class="badge" hidden></span>
+    <span id="phaseBadge" class="badge ghost" hidden></span>
+    <span id="progressText" class="mono"></span>
+  </div>
+  <div class="bar"><i id="progressBar"></i></div>
+</header>
+
+<main id="app">
+
+  <!-- 入口：加载 / 口令 / 角色选择 -->
+  <section id="gate" class="card">
+    <h1>开始标注</h1>
+    <p id="gateMsg" class="muted">正在加载题库…</p>
+
+    <div id="gateForm" hidden>
+      <div class="field">
+        <label>我是哪位标注员</label>
+        <div class="roles">
+          <button class="rolebtn" data-role="A">标注员 A</button>
+          <button class="rolebtn" data-role="B">标注员 B</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="pass">访问口令</label>
+        <input id="pass" type="password" autocomplete="off" placeholder="老师给你的口令">
+      </div>
+      <button id="enterBtn" class="primary" disabled>进入标注</button>
+      <p class="hint">拿到的是带口令的链接时，直接打开链接即可，不必手输。</p>
+    </div>
+
+    <div id="gateErr" class="err" hidden></div>
+  </section>
+
+  <!-- 试标 -->
+  <section id="trialDone" class="card" hidden>
+    <h1>试标完成 ✅</h1>
+    <p>20 句试标已全部完成。请先与另一位标注员开一次 <strong>30 分钟校准会</strong>，
+       逐句说明自己为什么这么判，<strong>只讨论有分歧的句子</strong>，把谈定的口径记下来。</p>
+    <p class="muted">校准会只统一规则，不要求强行一致。谈完再进入正式标注。</p>
+    <button id="toMain" class="primary">进入正式标注（472 句）</button>
+  </section>
+
+  <!-- 标注工作台 -->
+  <section id="work" hidden>
+    <div class="layout">
+      <div class="col-main">
+        <div class="card q">
+          <div class="qhead">
+            <span id="qPos" class="mono"></span>
+            <span id="qMeta" class="muted small"></span>
+          </div>
+          <p id="qText" class="sentence"></p>
+
+          <div class="labels" id="labels"></div>
+
+          <div class="field">
+            <label for="note">备注<span class="muted small" id="noteReq"></span></label>
+            <textarea id="note" rows="2" placeholder="可选。填「UN无法判定」时必须写明为什么拿不准。"></textarea>
+          </div>
+
+          <div class="actions">
+            <button id="prevBtn" class="ghost">← 上一句</button>
+            <span id="gateHint" class="hint"></span>
+            <button id="nextBtn" class="primary" disabled>下一句 →</button>
+          </div>
+        </div>
+        <p class="kbd">快捷键：<kbd>1</kbd>–<kbd>7</kbd> 选择标签，<kbd>Enter</kbd> 下一句。</p>
+      </div>
+
+      <aside class="col-ctx">
+        <div class="card ctx">
+          <div class="ctxhead">
+            <strong>摘要全文</strong>
+            <button id="ctxToggle" class="ghost small">收起</button>
+          </div>
+          <div id="ctxBody" class="ctxbody"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 完成 / 提交 -->
+  <section id="finish" class="card" hidden>
+    <h1 id="finishTitle">472 句已全部标注完毕</h1>
+    <p id="finishMsg"></p>
+    <div id="finishSum" class="kv"></div>
+    <div class="actions">
+      <button id="submitBtn" class="primary">提交并锁定</button>
+    </div>
+    <p class="hint" id="submitHint">提交后答案不可再修改。提交后才能导出交回文件。</p>
+  </section>
+
+  <!-- 交回 -->
+  <section id="export" class="card" hidden>
+    <h1 id="exportTitle">✅ 已提交并锁定</h1>
+    <p>请把下面三个文件全部发回给老师（一个都不能少）。</p>
+    <div class="actions wrap">
+      <button id="csvMain" class="primary">① 导出正式标注 CSV</button>
+      <button id="csvTrial" class="primary">② 导出试标集 CSV</button>
+      <button id="jsonLog" class="primary">③ 导出过程日志 JSON</button>
+    </div>
+    <div id="exportSum" class="kv"></div>
+    <p class="hint">若浏览器提示"是否允许多文件下载"，请选允许。导出后请核对文件名里带你的标注员编号。</p>
+    <details class="danger">
+      <summary>老师用：清空本机数据并重来</summary>
+      <p class="muted small">仅在需要重测时使用。点下面按钮会删除本机已填的全部答案。</p>
+      <button id="wipeBtn" class="ghost danger2">清空本机数据</button>
+    </details>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span>语料单元为期刊研究论文摘要；本页仅供本课题组标注使用。</span>
+  <span id="footVer" class="mono"></span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
