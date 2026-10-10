@@ -127,6 +127,24 @@ details.danger summary{cursor:pointer; color:var(--muted); font-size:13px}
 .fbtable tr.same td{background:#fbfefc}
 .fbtable tr.diff td{background:#fffbf0}
 .fbtable tr.diff td:nth-child(3){color:var(--brand); font-weight:700}
+.fbcards{margin:10px 0 6px}
+.fbcard{border:1px solid var(--line); border-left:4px solid var(--warn); border-radius:12px;
+  padding:12px 14px; margin:12px 0; background:#fffdf7}
+.fbc-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px}
+.fbc-head .sid{font-weight:700; font-size:15px}
+.chip{display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:600}
+.chip.bad{background:#fdecec; color:#b3261e; border:1px solid #f3c9c7}
+.fbc-text{margin:6px 0 10px; padding:10px 12px; background:#fff; border:1px solid var(--line);
+  border-radius:8px; font-size:14px; line-height:1.75; color:#232838}
+.fbc-cmp{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px}
+.cmpbox{flex:1 1 200px; border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:#fff}
+.cmpbox .lbl{display:block; font-size:12px; color:var(--muted); margin-bottom:3px}
+.cmpbox b{font-size:14.5px}
+.cmpbox.ref{border-color:#bcd4f6; background:#f5f9ff}
+.fbc-basis,.fbc-note{font-size:13px; color:#3c4453; line-height:1.7; margin:2px 0 6px}
+.fbc-basis .lbl,.fbc-note .lbl{display:inline-block; min-width:96px; color:var(--muted); font-size:12px}
+.fbc-fix{display:block; font-size:12.5px; color:var(--muted); margin:8px 0 4px}
+.fbcard input{width:100%; box-sizing:border-box}
 .calibrow{border:1px solid var(--line); border-left:4px solid var(--warn); border-radius:10px; padding:10px 12px; margin:8px 0; background:#fffdf7}
 .calibrow .ct{font-size:13.5px; color:#333b49; margin-bottom:4px}
 .calibrow .cm{font-size:12.5px; color:var(--muted); margin-bottom:6px}

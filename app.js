@@ -12,6 +12,7 @@ const ui = {
   pass: $("pass"), enterBtn: $("enterBtn"),
   trialSubmit: $("trialSubmit"), trialSum: $("trialSum"), lockTrial: $("lockTrial"),
   feedback: $("feedback"), keySource: $("keySource"), fbSum: $("fbSum"), fbTable: $("fbTable"),
+  fbLead: $("fbLead"), fbDiffN: $("fbDiffN"), fbSameN: $("fbSameN"),
   calibRows: $("calibRows"), calibSummary: $("calibSummary"), calibBy: $("calibBy"),
   calibHint: $("calibHint"), toMain: $("toMain"),
   work: $("work"), qPos: $("qPos"), qMeta: $("qMeta"), qText: $("qText"),
@@ -270,7 +271,8 @@ function trialCompare() {
     const a = state.trial[r.sid] || blankAns();
     const ref = r.ref || "";
     return { sid: r.sid, aid: r.aid, text: r.text, seq: r.seq, mine: a.v || "", ref: ref,
-             basis: r.basis || "", note: a.n || "", same: !!ref && a.v === ref };
+             basis: r.basis || "", note: a.n || "", group: r.group || "", journal: r.journal || "",
+             title: r.title || "", same: !!ref && a.v === ref };
   });
 }
 function showFeedback() {
@@ -278,41 +280,56 @@ function showFeedback() {
   hide(ui.work); hide(ui.trialSubmit); hide(ui.finish); hide(ui.export);
   show(ui.feedback);
   const rows = trialCompare();
-  const same = rows.filter((r) => r.same).length;
+  const same = rows.filter((r) => r.same);
   const diff = rows.filter((r) => !r.same);
   ui.keySource.textContent = "参考答案来源：" + (payload.trial_key_source || "研究者裁定") +
     "　（本页仅在提交并锁定试标后显示）";
-  ui.fbSum.innerHTML = row("试标一致性", same + " / " + rows.length +
-    "（" + Math.round(same / rows.length * 1000) / 10 + "%）") +
+  ui.fbSum.innerHTML = row("试标一致性", same.length + " / " + rows.length +
+    "（" + Math.round(same.length / rows.length * 1000) / 10 + "%）") +
     row("需要讨论的不一致句", diff.length + " 句") +
     row("试标锁定时间", new Date(state.trialLockedAt).toLocaleString());
-  let h = "<thead><tr><th>试标ID</th><th>你的判读</th><th>参考答案</th><th>是否一致</th>" +
-          "<th>手册依据</th><th>你的备注</th></tr></thead><tbody>";
-  rows.forEach((r) => {
-    h += '<tr class="' + (r.same ? "same" : "diff") + '"><td class="mono">' + esc(r.sid) + "</td><td>" +
-      esc(r.mine) + "</td><td><strong>" + esc(r.ref) + "</strong></td><td>" +
-      (r.same ? "一致" : "<strong>不一致</strong>") + "</td><td class=\"small\">" + esc(r.basis) +
-      "</td><td class=\"small\">" + esc(r.note) + "</td></tr>";
+  ui.fbDiffN.textContent = String(diff.length);
+  ui.fbSameN.textContent = String(same.length);
+  ui.fbLead.innerHTML = diff.length
+    ? "共 " + rows.length + " 句试标，你的判读与参考答案有 <strong>" + diff.length +
+      " 句</strong>不同——下面按句号一张一张列好了（含句子全文与《编码手册》依据）。" +
+      "校准会只讨论这 " + diff.length + " 句，不需要逐句过全部 20 句。"
+    : "本次试标 20 句全部一致，没有分歧句——直接写下面的《校准记录》即可进入正式标注。";
+  // ① 分歧句卡片：句子全文 + 对照 + 依据 + 口径输入
+  let c = "";
+  diff.forEach((r) => {
+    c += '<div class="fbcard" data-sid="' + esc(r.sid) + '">' +
+      '<div class="fbc-head"><span class="mono sid">' + esc(r.sid) + "</span>" +
+      '<span class="muted small">' + esc(r.group) + " ｜ " + esc(r.journal) + " ｜ 第 " +
+      esc(String(r.seq)) + ' 句</span><span class="chip bad">不一致</span></div>' +
+      '<p class="fbc-text">' + esc(r.text) + "</p>" +
+      '<div class="fbc-cmp">' +
+      '<div class="cmpbox"><span class="lbl">你的判读</span><b>' +
+      esc(r.mine || "（未填）") + "</b></div>" +
+      '<div class="cmpbox ref"><span class="lbl">参考答案</span><b>' + esc(r.ref) +
+      "</b></div></div>" +
+      '<div class="fbc-basis"><span class="lbl">《编码手册》依据</span>' + esc(r.basis) + "</div>" +
+      (r.note ? '<div class="fbc-note"><span class="lbl">你的备注</span>' + esc(r.note) + "</div>" : "") +
+      '<label class="fbc-fix" for="calib-' + esc(r.sid) + '">谈定的口径（可写「仍存疑」）</label>' +
+      '<input id="calib-' + esc(r.sid) + '" type="text" placeholder="' +
+      "写一句你和另一位同学谈定的口径；若仍拿不准就写「仍存疑」" + '" value="' +
+      esc(state.calib.rows[r.sid] || "") + '"></div>';
+  });
+  ui.calibRows.innerHTML = c || '<p class="hint">本次试标全部一致，无分歧句。</p>';
+  ui.calibRows.querySelectorAll("input").forEach((inp) => {
+    inp.addEventListener("input", () => {
+      state.calib.rows[inp.id.replace("calib-", "")] = inp.value;
+      calibChanged();
+    });
+  });
+  // ② 一致句：紧凑表，省略备注列
+  let h = "<thead><tr><th>试标ID</th><th>你的判读 ＝ 参考答案</th>" +
+          "<th>《编码手册》依据</th></tr></thead><tbody>";
+  same.forEach((r) => {
+    h += '<tr class="same"><td class="mono">' + esc(r.sid) + "</td><td>" + esc(r.mine) +
+      '</td><td class="small">' + esc(r.basis) + "</td></tr>";
   });
   ui.fbTable.innerHTML = h + "</tbody>";
-  if (diff.length) {
-    let c = '<p class="hint">下面只为不一致的 ' + diff.length + " 句记录口径（可写「仍存疑」）。</p>";
-    diff.forEach((r) => {
-      c += '<div class="calibrow"><div class="ct">' + esc(r.sid) + "：" + esc(r.text.slice(0, 60)) +
-        "…</div><div class=\"cm\">你的判读 <b>" + esc(r.mine) + "</b> ｜ 参考答案 <b>" + esc(r.ref) +
-        '</b></div><input id="calib-' + esc(r.sid) + '" type="text" placeholder="谈定的口径（或写「仍存疑」）" value="' +
-        esc(state.calib.rows[r.sid] || "") + '"></div>';
-    });
-    ui.calibRows.innerHTML = c;
-    ui.calibRows.querySelectorAll("input").forEach((inp) => {
-      inp.addEventListener("input", () => {
-        state.calib.rows[inp.id.replace("calib-", "")] = inp.value;
-        calibChanged();
-      });
-    });
-  } else {
-    ui.calibRows.innerHTML = '<p class="hint">本次试标全部一致，无分歧句。</p>';
-  }
   ui.calibSummary.value = state.calib.summary || "";
   ui.calibBy.value = state.calib.by || role || "";
   calibChanged();

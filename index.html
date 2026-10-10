@@ -52,14 +52,17 @@
     <p class="hint">锁定后仍可点「上一句」回看，但不能修改。</p>
   </section>
   <section id="feedback" class="card" hidden>
-    <h1>试标反馈 · 请逐句核对</h1>
+    <h1>试标已锁定 · 反馈与校准</h1>
     <p class="muted small" id="keySource"></p>
     <div id="fbSum" class="kv"></div>
-    <p><strong>不一致的句子</strong>是校准会的重点：请与另一位标注员逐句说明自己的判读理由，
-       只讨论有分歧的句子，谈定后把口径写进下面的《校准记录》。</p>
+    <p id="fbLead"></p>
+    <h2 class="h2">① 需要讨论的 <span id="fbDiffN" class="mono">0</span> 句（校准会重点）</h2>
+    <p class="hint">每张卡给出句子全文、《编码手册》依据，以及一个口径输入框；两人谈定后写进框里（也可写「仍存疑」）。</p>
+    <div id="calibRows" class="fbcards"></div>
+    <h2 class="h2">② 与你判读一致的句子（<span id="fbSameN" class="mono">0</span> 句）</h2>
+    <p class="hint">这些句子不必讨论，展开核对一眼即可。</p>
     <div class="tblwrap"><table id="fbTable" class="fbtable"></table></div>
     <h2 class="h2">校准记录（填写后方可进入正式标注）</h2>
-    <div id="calibRows"></div>
     <div class="field">
       <label for="calibSummary">本次校准会谈定的规则（必填，建议写清"哪类句子算哪一类"）</label>
       <textarea id="calibSummary" rows="4" placeholder="例：①以「为了解……采用……」开头、后半句进入材料与方法的句子，统一判 M2目的；②「表明……可能与……有关」统一判 M5结论；③……"></textarea>
@@ -122,7 +125,7 @@
       <button id="csvMain" class="primary">① 导出正式标注 CSV</button>
       <button id="csvTrial" class="primary">② 导出试标集 CSV</button>
       <button id="jsonLog" class="primary">③ 导出过程日志 JSON</button>
-      <button id="csvCalib" class="primary">④ 导出校准记录 CSV</button>
+      <button id="csvCalib" class="primary">④ 导出校准记录 md</button>
     </div>
     <div id="exportSum" class="kv"></div>
     <p class="hint">若浏览器提示"是否允许多文件下载"，请选允许。导出后请核对文件名里带你的标注员编号。</p>
