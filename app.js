@@ -351,7 +351,7 @@ function logFor(list, map) {
       noteLength: (a.n || "").length, noteEdits: a.ne || 0,
       enterCount: a.nEnter || 0, changeCount: a.c || 0,
       dwellMs: a.d || 0, dwellSec: Math.round((a.d || 0) / 100) / 10,
-      firstAt: a.t0 ? new Date(state.startedAt + 0, a.t0).toISOString() : null,
+      firstAt: a.t0 ? new Date(a.t0).toISOString() : null,
       lastAt: a.t1 ? new Date(a.t1).toISOString() : null,
       changes: (a.tr || []).map((x) => ({ atSec: Math.round(x[0] / 100) / 10, from: x[1], to: x[2] })),
     };
@@ -403,13 +403,17 @@ function renderExport() {
 }
 
 async function doExport(kind) {
-  const b = await exportBundle();
-  state.exportedAt = now();
-  save(true);
-  const base = "效度验证_标注员" + role + "_" + stamp();
-  if (kind === "main") download(base + "_正式标注.csv", b.mainCsv, "text/csv;charset=utf-8");
-  else if (kind === "trial") download(base + "_试标集.csv", b.trialCsv, "text/csv;charset=utf-8");
-  else download(base + "_过程日志.json", JSON.stringify(b.log, null, 1), "application/json;charset=utf-8");
+  try {
+    const b = await exportBundle();
+    state.exportedAt = now();
+    save(true);
+    const base = "效度验证_标注员" + role + "_" + stamp();
+    if (kind === "main") download(base + "_正式标注.csv", b.mainCsv, "text/csv;charset=utf-8");
+    else if (kind === "trial") download(base + "_试标集.csv", b.trialCsv, "text/csv;charset=utf-8");
+    else download(base + "_过程日志.json", JSON.stringify(b.log, null, 1), "application/json;charset=utf-8");
+  } catch (e) {
+    alert("导出失败：" + (e && e.message ? e.message : e) + "\n请把这一页截图发给老师。");
+  }
 }
 
 /* --------------------------------------------------------------- 启动 */
