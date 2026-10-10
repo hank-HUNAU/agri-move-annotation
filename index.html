@@ -8,7 +8,6 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <header class="topbar">
   <div class="brand">
     <strong>语步标注平台</strong>
@@ -21,14 +20,10 @@
   </div>
   <div class="bar"><i id="progressBar"></i></div>
 </header>
-
 <main id="app">
-
-  <!-- 入口：加载 / 口令 / 角色选择 -->
   <section id="gate" class="card">
     <h1>开始标注</h1>
     <p id="gateMsg" class="muted">正在加载题库…</p>
-
     <div id="gateForm" hidden>
       <div class="field">
         <label>我是哪位标注员</label>
@@ -44,20 +39,40 @@
       <button id="enterBtn" class="primary" disabled>进入标注</button>
       <p class="hint">拿到的是带口令的链接时，直接打开链接即可，不必手输。</p>
     </div>
-
     <div id="gateErr" class="err" hidden></div>
   </section>
-
-  <!-- 试标 -->
-  <section id="trialDone" class="card" hidden>
-    <h1>试标完成 ✅</h1>
-    <p>20 句试标已全部完成。请先与另一位标注员开一次 <strong>30 分钟校准会</strong>，
-       逐句说明自己为什么这么判，<strong>只讨论有分歧的句子</strong>，把谈定的口径记下来。</p>
-    <p class="muted">校准会只统一规则，不要求强行一致。谈完再进入正式标注。</p>
-    <button id="toMain" class="primary">进入正式标注（472 句）</button>
+  <section id="trialSubmit" class="card" hidden>
+    <h1>试标 20 句已答完 ✅</h1>
+    <p>请先<strong>提交并锁定</strong>试标答案。锁定后才会显示参考答案与逐句反馈——
+       这样你无法在看过答案之后再改试标，试标才有校准意义。</p>
+    <div id="trialSum" class="kv"></div>
+    <div class="actions">
+      <button id="lockTrial" class="primary">提交并锁定试标</button>
+    </div>
+    <p class="hint">锁定后仍可点「上一句」回看，但不能修改。</p>
   </section>
-
-  <!-- 标注工作台 -->
+  <section id="feedback" class="card" hidden>
+    <h1>试标反馈 · 请逐句核对</h1>
+    <p class="muted small" id="keySource"></p>
+    <div id="fbSum" class="kv"></div>
+    <p><strong>不一致的句子</strong>是校准会的重点：请与另一位标注员逐句说明自己的判读理由，
+       只讨论有分歧的句子，谈定后把口径写进下面的《校准记录》。</p>
+    <div class="tblwrap"><table id="fbTable" class="fbtable"></table></div>
+    <h2 class="h2">校准记录（填写后方可进入正式标注）</h2>
+    <div id="calibRows"></div>
+    <div class="field">
+      <label for="calibSummary">本次校准会谈定的规则（必填，建议写清"哪类句子算哪一类"）</label>
+      <textarea id="calibSummary" rows="4" placeholder="例：①以「为了解……采用……」开头、后半句进入材料与方法的句子，统一判 M2目的；②「表明……可能与……有关」统一判 M5结论；③……"></textarea>
+    </div>
+    <div class="field">
+      <label for="calibBy">填写人（标注员编号）</label>
+      <input id="calibBy" type="text" placeholder="如：A">
+    </div>
+    <div class="actions">
+      <span id="calibHint" class="hint"></span>
+      <button id="toMain" class="primary" disabled>完成校准会，进入正式标注 →</button>
+    </div>
+  </section>
   <section id="work" hidden>
     <div class="layout">
       <div class="col-main">
@@ -67,14 +82,11 @@
             <span id="qMeta" class="muted small"></span>
           </div>
           <p id="qText" class="sentence"></p>
-
           <div class="labels" id="labels"></div>
-
           <div class="field">
             <label for="note">备注<span class="muted small" id="noteReq"></span></label>
             <textarea id="note" rows="2" placeholder="可选。填「UN无法判定」时必须写明为什么拿不准。"></textarea>
           </div>
-
           <div class="actions">
             <button id="prevBtn" class="ghost">← 上一句</button>
             <span id="gateHint" class="hint"></span>
@@ -83,7 +95,6 @@
         </div>
         <p class="kbd">快捷键：<kbd>1</kbd>–<kbd>7</kbd> 选择标签，<kbd>Enter</kbd> 下一句。</p>
       </div>
-
       <aside class="col-ctx">
         <div class="card ctx">
           <div class="ctxhead">
@@ -95,8 +106,6 @@
       </aside>
     </div>
   </section>
-
-  <!-- 完成 / 提交 -->
   <section id="finish" class="card" hidden>
     <h1 id="finishTitle">472 句已全部标注完毕</h1>
     <p id="finishMsg"></p>
@@ -106,32 +115,28 @@
     </div>
     <p class="hint" id="submitHint">提交后答案不可再修改。提交后才能导出交回文件。</p>
   </section>
-
-  <!-- 交回 -->
   <section id="export" class="card" hidden>
     <h1 id="exportTitle">✅ 已提交并锁定</h1>
-    <p>请把下面三个文件全部发回给老师（一个都不能少）。</p>
+    <p>请把下面<strong>四个</strong>文件全部发回给老师（一个都不能少）。</p>
     <div class="actions wrap">
       <button id="csvMain" class="primary">① 导出正式标注 CSV</button>
       <button id="csvTrial" class="primary">② 导出试标集 CSV</button>
       <button id="jsonLog" class="primary">③ 导出过程日志 JSON</button>
+      <button id="csvCalib" class="primary">④ 导出校准记录 CSV</button>
     </div>
     <div id="exportSum" class="kv"></div>
     <p class="hint">若浏览器提示"是否允许多文件下载"，请选允许。导出后请核对文件名里带你的标注员编号。</p>
     <details class="danger">
       <summary>老师用：清空本机数据并重来</summary>
-      <p class="muted small">仅在需要重测时使用。点下面按钮会删除本机已填的全部答案。</p>
+      <p class="muted small">仅在需要重测时使用。点下面按钮会删除本机已填的全部答案与校准记录。</p>
       <button id="wipeBtn" class="ghost danger2">清空本机数据</button>
     </details>
   </section>
-
 </main>
-
 <footer class="foot">
   <span>语料单元为期刊研究论文摘要；本页仅供本课题组标注使用。</span>
   <span id="footVer" class="mono"></span>
 </footer>
-
 <script src="app.js"></script>
 </body>
 </html>

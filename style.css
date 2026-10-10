@@ -53,7 +53,7 @@ p{margin:.5em 0}
 .rolebtn[aria-pressed="true"]{border-color:var(--brand); background:#eaf1ff; color:#12489b}
 .field{margin:14px 0}
 .field label{display:block; font-weight:600; margin-bottom:6px}
-input[type=password],textarea{
+input[type=password],input[type=text],textarea{
   width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px;
   font:inherit; color:var(--ink); background:#fff;
 }
@@ -118,3 +118,15 @@ kbd{background:#fff; border:1px solid var(--line); border-bottom-width:2px; bord
 details.danger{margin-top:18px; border-top:1px solid var(--line); padding-top:12px}
 details.danger summary{cursor:pointer; color:var(--muted); font-size:13px}
 .foot{max-width:1180px; margin:0 auto; padding:8px 20px 40px; color:var(--muted); font-size:12.5px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+/* ---------- 试标反馈页 ---------- */
+.h2{font-size:16px; margin:22px 0 8px}
+.tblwrap{overflow:auto; margin:10px 0 4px; border:1px solid var(--line); border-radius:10px}
+.fbtable{width:100%; border-collapse:collapse; font-size:13.5px}
+.fbtable th,.fbtable td{border-bottom:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top}
+.fbtable th{background:#f7f9fc; position:sticky; top:0; font-weight:600; white-space:nowrap}
+.fbtable tr.same td{background:#fbfefc}
+.fbtable tr.diff td{background:#fffbf0}
+.fbtable tr.diff td:nth-child(3){color:var(--brand); font-weight:700}
+.calibrow{border:1px solid var(--line); border-left:4px solid var(--warn); border-radius:10px; padding:10px 12px; margin:8px 0; background:#fffdf7}
+.calibrow .ct{font-size:13.5px; color:#333b49; margin-bottom:4px}
+.calibrow .cm{font-size:12.5px; color:var(--muted); margin-bottom:6px}
