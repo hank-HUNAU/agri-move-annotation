@@ -516,8 +516,12 @@ function bindOnce() {
     } else if (e.key === "Enter" || e.key === "ArrowRight") { if (!ui.nextBtn.disabled) goNext(); }
     else if (e.key === "ArrowLeft" && !ui.prevBtn.disabled) goPrev();
   });
-  window.addEventListener("beforeunload", () => { leaveCurrent(); save(true); });
+window.addEventListener("beforeunload", () => { leaveCurrent(); save(true); });
   setInterval(() => { if (!ui.work.hidden && !state.submitted) renderTop(); }, 30000);
 }
+
+// 从裸链接跳到带 #role=…&k=… 的链接时，浏览器只改 hash 不会重载页面；
+// 这里补一个监听，免得学生粘贴链接后页面没反应。
+window.addEventListener("hashchange", () => { if (!payload) boot(); });
 
 boot();
