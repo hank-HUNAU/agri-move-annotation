@@ -75,9 +75,15 @@
       <div id="fbAll" class="fbcards"></div>
     </div>
     <h2 class="h2">校准记录（填写后方可进入正式标注）</h2>
+    <p class="hint">两处分工：上面每张卡里的<b>「这一句最后怎么定」是留痕</b>（可留空，拿不准就写「仍存疑」）；
+       下面这一栏是<b>归纳出的规则</b>，必填，写满 20 字才能进入正式标注。</p>
     <div class="field">
-      <label for="calibSummary">本次校准会谈定的规则（必填，建议写清"哪类句子算哪一类"）</label>
-      <textarea id="calibSummary" rows="4" placeholder="例：①以「为了解……采用……」开头、后半句进入材料与方法的句子，统一判 M2目的；②「表明……可能与……有关」统一判 M5结论；③……"></textarea>
+      <label for="calibSummary">由上面几句归纳出的规则（必填，写清「哪类句子算哪一类」）</label>
+      <div class="gather">
+        <button type="button" id="calibGather" class="ghost small">↙ 把上面填过的口径汇总到这里</button>
+        <span id="calibGatherHint" class="hint"></span>
+      </div>
+      <textarea id="calibSummary" rows="5" placeholder="例：①以「为了解……采用……」开头、后半句进入材料与方法的句子，统一判 M3方法（手册第六节规则⑦）；②「表明……可能与……有关」统一判 M5结论；③……"></textarea>
     </div>
     <div class="field">
       <label for="calibBy">填写人（标注员编号）</label>

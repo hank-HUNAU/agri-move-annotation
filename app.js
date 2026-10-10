@@ -16,6 +16,7 @@ const ui = {
   fbScope: $("fbScope"), fbDiffBlock: $("fbDiffBlock"), fbAllBlock: $("fbAllBlock"), fbAll: $("fbAll"),
   calibRows: $("calibRows"), calibSummary: $("calibSummary"), calibBy: $("calibBy"),
   calibHint: $("calibHint"), toMain: $("toMain"),
+  calibGather: $("calibGather"), calibGatherHint: $("calibGatherHint"),
   work: $("work"), qPos: $("qPos"), qMeta: $("qMeta"), qText: $("qText"),
   labels: $("labels"), note: $("note"), noteReq: $("noteReq"),
   prevBtn: $("prevBtn"), nextBtn: $("nextBtn"), gateHint: $("gateHint"),
@@ -325,9 +326,9 @@ function fbCardHtml(r, withInput) {
     '<div class="fbc-basis"><span class="lbl">《编码手册》依据</span>' + esc(r.basis) + "</div>" +
     (r.note ? '<div class="fbc-note"><span class="lbl">你的备注</span>' + esc(r.note) + "</div>" : "") +
     (withInput
-      ? '<label class="fbc-fix" for="calib-' + esc(r.sid) + '">谈定的口径（可写「仍存疑」）</label>' +
+      ? '<label class="fbc-fix" for="calib-' + esc(r.sid) + '">这一句最后怎么定（一句话；不确定就写「仍存疑」）</label>' +
         '<input id="calib-' + esc(r.sid) + '" type="text" placeholder="' +
-        "写一句你和另一位同学谈定的口径；若仍拿不准就写「仍存疑」" + '" value="' +
+        "例：按语义重心判 M3方法（依据手册规则⑦）／仍存疑：两人读法不同" + '" value="' +
         esc(state.calib.rows[r.sid] || "") + '">'
       : "") + "</div>";
 }
@@ -403,6 +404,27 @@ function calibChanged() {
   ui.toMain.disabled = !ok;
   ui.calibHint.textContent = ok ? "可以进入正式标注了" : "请先写下校准会谈定的规则（至少 20 字）";
   save();
+}
+const GATHER_MARK = "【逐句口径汇总，可继续改写】";
+function gatherCalib() {
+  const diff = trialCompare().filter((r) => !r.same);
+  const parts = [];
+  diff.forEach((r) => {
+    const v = (state.calib.rows[r.sid] || "").trim();
+    if (v) parts.push(r.sid + "：" + v);
+  });
+  if (!parts.length) {
+    ui.calibGatherHint.textContent = diff.length
+      ? "上面 " + diff.length + " 张卡还没填过口径——先各写一句，再点这里汇总。"
+      : "本次试标全部一致，没有分歧句需要汇总。";
+    return;
+  }
+  let prev = ui.calibSummary.value || "";
+  const i = prev.indexOf(GATHER_MARK);
+  if (i >= 0) prev = prev.slice(0, i).trimEnd();
+  ui.calibSummary.value = (prev ? prev + "\n" : "") + GATHER_MARK + "\n" + parts.join("\n");
+  calibChanged();
+  ui.calibGatherHint.textContent = "已汇总 " + parts.length + " 句；请顺着改写成规则（再点会覆盖上一次的汇总部分）。";
 }
 function enterMain() {
   state.calib.done = true;
@@ -565,6 +587,7 @@ function bindOnce() {
   ui.toMain.addEventListener("click", enterMain);
   ui.calibSummary.addEventListener("input", calibChanged);
   ui.calibBy.addEventListener("input", calibChanged);
+  ui.calibGather.addEventListener("click", gatherCalib);
   ui.nextBtn.addEventListener("click", goNext);
   ui.prevBtn.addEventListener("click", goPrev);
   ui.note.addEventListener("input", noteChanged);
