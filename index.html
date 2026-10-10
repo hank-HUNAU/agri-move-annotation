@@ -17,6 +17,7 @@
     <span id="roleBadge" class="badge" hidden></span>
     <span id="phaseBadge" class="badge ghost" hidden></span>
     <span id="progressText" class="mono"></span>
+    <span id="etaText" class="mono muted small"></span>
   </div>
   <div class="bar"><i id="progressBar"></i></div>
 </header>
@@ -99,16 +100,28 @@
       <div class="col-main">
         <div class="card q">
           <div class="qhead">
-            <span id="qPos" class="mono"></span>
+            <span class="qhead-left">
+              <span id="qPos" class="mono"></span>
+              <span id="qInAbstract" class="badge ghost"></span>
+            </span>
             <span id="qMeta" class="muted small"></span>
           </div>
           <p id="qText" class="sentence"></p>
           <div class="labels" id="labels"></div>
           <div class="field">
             <label for="note">备注<span class="muted small" id="noteReq"></span></label>
+            <div class="chips" id="noteChips">
+              <button type="button" class="chipbtn" data-note="方法＋结果同句">方法＋结果同句</button>
+              <button type="button" class="chipbtn" data-note="结果与结论难分">结果与结论难分</button>
+              <button type="button" class="chipbtn" data-note="背景与目的难分">背景与目的难分</button>
+              <button type="button" class="chipbtn" data-note="含结构化摘要小标题">含结构化摘要小标题</button>
+              <button type="button" class="chipbtn" data-note="疑非摘要内容">疑非摘要内容</button>
+              <button type="button" class="chipbtn" data-note="表述不完整／截断">表述不完整／截断</button>
+            </div>
             <textarea id="note" rows="2" placeholder="可选。填「UN无法判定」时必须写明为什么拿不准。"></textarea>
           </div>
           <div class="actions">
+            <span id="saveStamp" class="muted small"></span>
             <button id="prevBtn" class="ghost">← 上一句</button>
             <span id="gateHint" class="hint"></span>
             <button id="nextBtn" class="primary" disabled>下一句 →</button>
@@ -120,7 +133,11 @@
         <div class="card ctx">
           <div class="ctxhead">
             <strong>摘要全文</strong>
-            <button id="ctxToggle" class="ghost small">收起</button>
+            <span class="ctxnav">
+              <button id="ctxPrev" type="button" class="ghost small">↑ 上一句</button>
+              <button id="ctxNext" type="button" class="ghost small">↓ 下一句</button>
+              <button id="ctxToggle" type="button" class="ghost small">收起</button>
+            </span>
           </div>
           <div id="ctxBody" class="ctxbody"></div>
         </div>
@@ -147,6 +164,16 @@
     </div>
     <div id="exportSum" class="kv"></div>
     <p class="hint">若浏览器提示"是否允许多文件下载"，请选允许。导出后请核对文件名里带你的标注员编号。</p>
+    <div class="checklist" id="exportList">
+      <p class="muted small">下载后逐项确认（4／4 才算交回完整）：</p>
+      <ul>
+        <li data-kind="main"><span class="box">☐</span> ① 正式标注 CSV（472 行）</li>
+        <li data-kind="trial"><span class="box">☐</span> ② 试标集 CSV（20 行）</li>
+        <li data-kind="log"><span class="box">☐</span> ③ 过程日志 JSON</li>
+        <li data-kind="calib"><span class="box">☐</span> ④ 校准记录 md</li>
+      </ul>
+      <p class="hint" id="exportListHint"></p>
+    </div>
     <details class="danger">
       <summary>老师用：清空本机数据并重来</summary>
       <p class="muted small">仅在需要重测时使用。点下面按钮会删除本机已填的全部答案与校准记录。</p>
@@ -154,6 +181,10 @@
     </details>
   </section>
 </main>
+<div id="toast" class="toast" hidden>
+  <span id="toastMsg"></span>
+  <button type="button" id="toastOk" class="ghost small">知道了</button>
+</div>
 <footer class="foot">
   <span>语料单元为期刊研究论文摘要；本页仅供本课题组标注使用。</span>
   <span id="footVer" class="mono"></span>

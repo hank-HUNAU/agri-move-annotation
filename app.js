@@ -18,13 +18,16 @@ const ui = {
   calibHint: $("calibHint"), toMain: $("toMain"),
   calibGather: $("calibGather"), calibGatherHint: $("calibGatherHint"),
   work: $("work"), qPos: $("qPos"), qMeta: $("qMeta"), qText: $("qText"),
+  qInAbstract: $("qInAbstract"), etaText: $("etaText"), saveStamp: $("saveStamp"),
   labels: $("labels"), note: $("note"), noteReq: $("noteReq"),
+  noteChips: $("noteChips"), toast: $("toast"), toastMsg: $("toastMsg"), toastOk: $("toastOk"),
   prevBtn: $("prevBtn"), nextBtn: $("nextBtn"), gateHint: $("gateHint"),
-  ctxBody: $("ctxBody"), ctxToggle: $("ctxToggle"),
+  ctxBody: $("ctxBody"), ctxToggle: $("ctxToggle"), ctxPrev: $("ctxPrev"), ctxNext: $("ctxNext"),
   finish: $("finish"), finishTitle: $("finishTitle"), finishMsg: $("finishMsg"),
   finishSum: $("finishSum"), submitBtn: $("submitBtn"), submitHint: $("submitHint"),
   export: $("export"), exportTitle: $("exportTitle"), exportSum: $("exportSum"),
   csvMain: $("csvMain"), csvTrial: $("csvTrial"), jsonLog: $("jsonLog"), csvCalib: $("csvCalib"),
+  exportList: $("exportList"), exportListHint: $("exportListHint"),
   wipeBtn: $("wipeBtn"),
   roleBadge: $("roleBadge"), phaseBadge: $("phaseBadge"),
   progressText: $("progressText"), progressBar: $("progressBar"), footVer: $("footVer"),
@@ -111,11 +114,41 @@ function loadState() {
 let saveTimer = null;
 function save(immediate) {
   clearTimeout(saveTimer);
-  const go = () => { try { localStorage.setItem(storeKey(), JSON.stringify(state)); } catch (e) {} };
+  const go = () => {
+    try { localStorage.setItem(storeKey(), JSON.stringify(state)); } catch (e) {}
+    if (ui.saveStamp) ui.saveStamp.textContent = "已存本机 " + hhmmss(now());
+  };
   immediate ? go() : (saveTimer = setTimeout(go, 400));
 }
 function currentList() { return phase === "trial" ? payload.trial : payload.sentences; }
 function currentMap() { return phase === "trial" ? state.trial : state.main; }
+// 同一篇摘要的句子（按原文句序）——用于"本篇第 n/共 m 句"与面板内跳句
+function listOfAid(aid) {
+  return currentList().filter((r) => r.aid === aid).sort((a, b) => a.seq - b.seq);
+}
+function hhmmss(ts) {
+  const d = new Date(ts);
+  const p = (x) => String(x).padStart(2, "0");
+  return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+}
+function etaLine() {
+  const list = currentList(), map = currentMap();
+  const done = list.filter((r) => map[r.sid] && map[r.sid].v).length;
+  if (done < 10 || done >= list.length) return "";
+  const elapsed = now() - state.startedAt;
+  if (elapsed <= 0 || elapsed > 12 * 3600 * 1000) return "";   // 存档跨天/时钟异常：估时无意义，不显示
+  const per = elapsed / done;
+  const mins = Math.max(5, Math.round(per * (list.length - done) / 60000 / 5) * 5);
+  if (mins > 300) return "";                                   // 超过 5 小时的一律不显示，免得误导
+  return "· 约还需 " + mins + " 分钟";
+}
+let toastTimer = null;
+function showToast(msg, keep) {
+  ui.toastMsg.textContent = msg;
+  show(ui.toast);
+  clearTimeout(toastTimer);
+  if (!keep) toastTimer = setTimeout(() => hide(ui.toast), 120000);
+}
 function row(k, v) { return "<div><span>" + esc(k) + "</span><b>" + esc(v) + "</b></div>"; }
 function show(el) { el.hidden = false; }
 function hide(el) { el.hidden = true; }
@@ -127,13 +160,46 @@ function renderContext(rec) {
     (a.discipline ? " · " + esc(a.discipline) : "") + " · " + esc(a.group || "") + "</span>" +
     '<span class="meta">' + esc(a.title || "") + "</span>";
   const text = a.text || "";
-  const i = rec.text ? text.indexOf(rec.text) : -1;
-  const body = i >= 0
-    ? esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + rec.text.length)) + "</mark>" + esc(text.slice(i + rec.text.length))
-    : esc(text);
-  ui.ctxBody.innerHTML = head + body;
-  const mk = ui.ctxBody.querySelector("mark");
-  if (mk) mk.scrollIntoView({ block: "center" });
+  // 把整篇切成"可寻址的句子"：当前句用 <mark>，其余用 <span>，供面板内上一句/下一句跳转
+  const sents = listOfAid(rec.aid);
+  let cursor = 0, ok = sents.length > 0;
+  const parts = [];
+  sents.forEach((r) => {
+    if (!ok) return;
+    const i = text.indexOf(r.text, cursor);
+    if (i < 0) { ok = false; return; }
+    parts.push(esc(text.slice(cursor, i)));
+    parts.push((r.sid === rec.sid)
+      ? '<mark class="sent cur" data-sid="' + esc(r.sid) + '">' + esc(r.text) + "</mark>"
+      : '<span class="sent" data-sid="' + esc(r.sid) + '">' + esc(r.text) + "</span>");
+    cursor = i + r.text.length;
+  });
+  ui.ctxBody.innerHTML = head + (ok ? parts.join("") + esc(text.slice(cursor)) : "");
+  if (!ok) {                       // 兜底：找不到句界就退回过、往的整段高亮
+    const i = rec.text ? text.indexOf(rec.text) : -1;
+    ui.ctxBody.innerHTML = head + (i >= 0
+      ? esc(text.slice(0, i)) + '<mark class="cur">' + esc(text.slice(i, i + rec.text.length)) +
+        "</mark>" + esc(text.slice(i + rec.text.length))
+      : esc(text));
+  }
+  ctxScrollTo(ui.ctxBody.querySelector("mark"));
+}
+function ctxScrollTo(el) {
+  if (!el) return;
+  const body = ui.ctxBody;
+  const r = el.getBoundingClientRect(), c = body.getBoundingClientRect();
+  body.scrollTop = Math.max(0, body.scrollTop + (r.top - c.top) - (c.height / 2 - r.height / 2));
+}
+function ctxJump(step) {
+  const body = ui.ctxBody;
+  const cur = body.querySelector("mark.sent") || body.querySelector("mark");
+  const all = [...body.querySelectorAll(".sent")];
+  const i = all.indexOf(cur);
+  const t = all[i + step];
+  if (i < 0 || !t) return;
+  ctxScrollTo(t);
+  t.classList.add("flash");
+  setTimeout(() => t.classList.remove("flash"), 900);
 }
 function renderTop() {
   ui.roleBadge.hidden = false;
@@ -156,6 +222,7 @@ function renderTop() {
     ui.progressBar.style.width = (done / list.length * 100) + "%";
   }
   ui.footVer.textContent = payload.dataset.name + " · 题库 " + payload.dataset.version;
+  ui.etaText.textContent = etaLine();
 }
 function renderQuestion() {
   const list = currentList(), rec = list[curIdx];
@@ -165,6 +232,8 @@ function renderQuestion() {
   ans.t1 = now();
   ans.nEnter = (ans.nEnter || 0) + 1;
   ui.qPos.textContent = (phase === "trial" ? "试标 " : "第 ") + (curIdx + 1) + " / " + list.length + " 句";
+  const sibs = listOfAid(rec.aid);
+  ui.qInAbstract.textContent = "本篇第 " + rec.seq + " / 共 " + sibs.length + " 句";
   ui.qMeta.textContent = [rec.journal, rec.year, rec.discipline, rec.group].filter(Boolean).join(" · ");
   ui.qText.textContent = rec.text;
   ui.note.value = ans.n || "";
@@ -239,9 +308,22 @@ function enterCurrent() {
 function goNext() {
   if (unmet()) return;
   leaveCurrent();
-  if (curIdx < currentList().length - 1) { curIdx++; enterCurrent(); renderQuestion(); return; }
+  if (curIdx < currentList().length - 1) {
+    curIdx++; enterCurrent(); renderQuestion(); maybeBreak(); return;
+  }
   if (phase === "trial") { showTrialSubmit(); return; }
   finishMain();
+}
+// 每答满 50 句提醒休息一次（不打断流程），并把休息点记入日志
+function maybeBreak() {
+  if (phase !== "main") return;
+  const done = payload.sentences.filter((r) => state.main[r.sid] && state.main[r.sid].v).length;
+  state.breaks = state.breaks || [];
+  if (done > 0 && done % 50 === 0 && !state.breaks.some((b) => b.answered === done)) {
+    state.breaks.push({ answered: done, at: now() });
+    showToast("已连续标注 " + done + " 句，建议起身休息 5 分钟再继续——答案已自动保存在本机，关掉页面也不会丢。", true);
+    save(true);
+  }
 }
 function goPrev() {
   if (curIdx === 0) return;
@@ -545,6 +627,9 @@ async function exportBundle() {
     hashes: { mainCsvSha256: mainSha, trialCsvSha256: trialSha },
     trialLog: logFor(payload.trial, state.trial),
     mainLog: logFor(payload.sentences, state.main),
+    breaks: state.breaks || [],                       // 每 50 句的休息提示点（用于疲劳漂移检查）
+    exportedFiles: state.exported || [],              // 实际导出了哪几个交回文件
+    ctxNotes: { mode: "side-by-side" },               // 上下文面板形态（本轮固定并排）
   };
   return { mainCsv, trialCsv, calibMd, log };
 }
@@ -560,9 +645,12 @@ function renderExport() {
     row("锁定时长（自开始）", fmtMs(state.lockedAt - state.startedAt)) +
     row("题库版本", payload.dataset.version);
   renderTop();
+  markExportList();
 }
 async function doExport(kind) {
   try {
+    state.exported = state.exported || [];
+    if (!state.exported.includes(kind)) state.exported.push(kind);   // 先记账，日志才含本次
     const b = await exportBundle();
     state.exportedAt = now(); save(true);
     const base = "效度验证_标注员" + role + "_" + stamp();
@@ -570,9 +658,23 @@ async function doExport(kind) {
     else if (kind === "trial") download(base + "_试标集.csv", b.trialCsv, "text/csv;charset=utf-8");
     else if (kind === "calib") download(base + "_校准记录.md", b.calibMd, "text/markdown;charset=utf-8");
     else download(base + "_过程日志.json", JSON.stringify(b.log, null, 1), "application/json;charset=utf-8");
+    markExportList();
+    save(true);
   } catch (e) {
     alert("导出失败：" + (e && e.message ? e.message : e) + "\n请把这一页截图发给老师。");
   }
+}
+function markExportList() {
+  const done = state.exported || [];
+  ui.exportList.querySelectorAll("li").forEach((li) => {
+    const k = li.getAttribute("data-kind");
+    const hit = done.includes(k);
+    li.classList.toggle("done", hit);
+    li.querySelector(".box").textContent = hit ? "☑" : "☐";
+  });
+  ui.exportListHint.textContent = done.length >= 4
+    ? "4／4 已导出 ✓ 请把四个文件都发给老师。"
+    : "已导出 " + done.length + "／4——还差 " + (4 - done.length) + " 个。";
 }
 function bindOnce() {
   if (bound) return;
@@ -600,6 +702,18 @@ function bindOnce() {
     const c = ui.ctxBody.classList.toggle("collapsed");
     ui.ctxToggle.textContent = c ? "展开" : "收起";
   });
+  ui.ctxPrev.addEventListener("click", () => ctxJump(-1));
+  ui.ctxNext.addEventListener("click", () => ctxJump(1));
+  ui.toastOk.addEventListener("click", () => hide(ui.toast));
+  ui.noteChips.addEventListener("click", (e) => {
+    const b = e.target.closest(".chipbtn");
+    if (!b) return;
+    const phrase = b.getAttribute("data-note") || "";
+    const cur = ui.note.value.trim();
+    ui.note.value = cur ? (cur + "；" + phrase) : phrase;
+    noteChanged();
+    ui.note.focus();
+  });
   ui.wipeBtn.addEventListener("click", () => {
     if (!confirm("确定清空本机保存的全部标注数据？此操作不可撤销。")) return;
     localStorage.removeItem(storeKey());
@@ -617,6 +731,12 @@ function bindOnce() {
       const L = payload.labels[Number(e.key) - 1];
       if (L) { const inp = ui.labels.querySelector('input[value="' + L.code + '"]');
         if (inp && !inp.disabled) { inp.checked = true; onPick(L.code); } }
+    } else if (e.key === "u" || e.key === "U") {
+      const inp = ui.labels.querySelector('input[value="UN无法判定"]');
+      if (inp && !inp.disabled) { inp.checked = true; onPick("UN无法判定"); ui.note.focus(); }
+    } else if (e.key === "?") {
+      showToast("快捷键：1–7 选标签｜U 选「UN无法判定」并写备注｜← 上一句｜Enter / → 下一句｜"
+                + "Ctrl+Enter 在备注里也能翻页｜摘要面板「↑ 上一句／↓ 下一句」看同篇邻近句。", true);
     } else if (e.key === "Enter" || e.key === "ArrowRight") { if (!ui.nextBtn.disabled) goNext(); }
     else if (e.key === "ArrowLeft" && !ui.prevBtn.disabled) goPrev();
   });
