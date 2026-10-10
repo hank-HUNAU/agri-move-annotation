@@ -514,7 +514,7 @@ function enterMain() {
   save(true);
   phase = "main";
   hide(ui.feedback);
-  startMain();
+  enterMainPhase();
 }
 function startMain() {
   phase = "main";
@@ -649,6 +649,15 @@ function renderExport() {
 }
 async function doExport(kind) {
   try {
+    if (!mainReady) {                       // 刚恢复就点导出时，等正式包到齐再打包
+      showToast("正在准备题库（" + mainPct + "%），马上就好…", true);
+      try { await loadMainBank(); } catch (e) {
+        hide(ui.toast);
+        alert("题库还没准备好：" + (mainErr || e) + "\n请检查网络后重试导出。");
+        return;
+      }
+      hide(ui.toast);
+    }
     state.exported = state.exported || [];
     if (!state.exported.includes(kind)) state.exported.push(kind);   // 先记账，日志才含本次
     const b = await exportBundle();
@@ -743,16 +752,61 @@ function bindOnce() {
   window.addEventListener("beforeunload", () => { leaveCurrent(); save(true); });
   setInterval(() => { if (!ui.work.hidden && !state.submitted) renderTop(); }, 30000);
 }
+// 带百分比的下载（题库首次打开要下几十~几百 KB，给个进度免得学生以为卡死）
+async function fetchBank(name, onPct) {
+  const res = await fetch("data/" + name, { cache: "no-cache" });
+  if (!res.ok) throw new Error("题库文件读取失败（HTTP " + res.status + "）");
+  const total = Number(res.headers.get("content-length") || 0);
+  if (!res.body || !total) return res.json();
+  const reader = res.body.getReader();
+  const chunks = [];
+  let got = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    got += value.length;
+    if (onPct) onPct(Math.min(99, Math.round((got / total) * 100)));
+  }
+  const buf = new Uint8Array(got);
+  let off = 0;
+  chunks.forEach((c) => { buf.set(c, off); off += c.length; });
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+let mainReady = false, mainPromise = null, mainPct = 0, mainErr = "";
+function loadMainBank() {
+  if (mainPromise) return mainPromise;
+  mainPct = 0;
+  mainPromise = (async () => {
+    const pe = await fetchBank("enc_" + role.toLowerCase() + "_main.json",
+                               (p) => { mainPct = p; });
+    const p = await decrypt(pe, pass);
+    payload.sentences = p.sentences || [];
+    payload.abstracts = p.abstracts || {};
+    mainReady = true;
+    if (phase === "done" || phase === "main") renderTop();      // 交回页/正式页的计数刷新
+    if (phase === "done") renderExport();
+    return true;
+  })().catch((e) => {
+    mainPromise = null;                       // 允许重试
+    mainErr = (e && e.message) ? e.message : String(e);
+    throw e;
+  });
+  return mainPromise;
+}
 function start() {
-  hide(ui.gateForm); ui.gateMsg.textContent = "正在解密题库…"; hide(ui.gateErr);
-  fetch("data/enc_" + role.toLowerCase() + ".json", { cache: "no-cache" })
-    .then((r) => { if (!r.ok) throw new Error("题库文件读取失败（HTTP " + r.status + "）"); return r.json(); })
-    .then((pe) => decrypt(pe, pass))
+  hide(ui.gateForm); ui.gateMsg.textContent = "正在下载题库（首次打开需要，约 50 KB）…"; hide(ui.gateErr);
+  fetchBank("enc_" + role.toLowerCase() + "_trial.json",
+            (p) => { ui.gateMsg.textContent = "正在下载题库 … " + p + "%（首次打开需要）"; })
+    .then((pe) => { ui.gateMsg.textContent = "正在解密题库…"; return decrypt(pe, pass); })
     .then((p) => {
       payload = p;
+      payload.sentences = payload.sentences || [];     // 正式包随后台预取补齐
+      payload.abstracts = payload.abstracts || {};
       hide(ui.gate);
       state = loadState();
       bindOnce();
+      loadMainBank().catch(() => { /* 失败留给进入正式标注时提示与重试 */ });
       if (state.submitted) { renderExport(); return; }
       if (!state.trialSubmitted) {
         const i = firstUnanswered(payload.trial, state.trial);
@@ -761,7 +815,7 @@ function start() {
         return;
       }
       if (!state.calib.done) { showFeedback(); return; }
-      startMain();
+      enterMainPhase();
     })
     .catch((e) => {
       show(ui.gateErr);
@@ -770,6 +824,22 @@ function start() {
       ui.gateMsg.textContent = "未能进入标注。";
       show(ui.gateForm);
     });
+}
+// 进入正式标注：若正式包还没下完（例如试标做得特别快），在这里等一下并显示进度
+async function enterMainPhase() {
+  if (!mainReady) {
+    ui.gateMsg.textContent = "正在准备 472 句题库…";
+    showToast("正在准备正式标注的题库（" + mainPct + "%），请稍候…", true);
+    try {
+      await loadMainBank();
+    } catch (e) {
+      hide(ui.toast);
+      alert("正式题库下载失败：" + (mainErr || e) + "\n请检查网络后点「完成校准会，进入正式标注」重试。");
+      return;
+    }
+    hide(ui.toast);
+  }
+  startMain();
 }
 function boot() {
   const frag = parseFragment();
