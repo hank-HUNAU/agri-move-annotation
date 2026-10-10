@@ -27,6 +27,7 @@ const ui = {
   finishSum: $("finishSum"), submitBtn: $("submitBtn"), submitHint: $("submitHint"),
   export: $("export"), exportTitle: $("exportTitle"), exportSum: $("exportSum"),
   csvMain: $("csvMain"), csvTrial: $("csvTrial"), jsonLog: $("jsonLog"), csvCalib: $("csvCalib"),
+  zipAll: $("zipAll"),
   exportList: $("exportList"), exportListHint: $("exportListHint"),
   wipeBtn: $("wipeBtn"),
   roleBadge: $("roleBadge"), phaseBadge: $("phaseBadge"),
@@ -67,6 +68,79 @@ function download(name, text, mime) {
 function stamp() {
   const d = new Date(), p = (n) => String(n).padStart(2, "0");
   return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "_" + p(d.getHours()) + p(d.getMinutes());
+}
+function downloadBytes(name, bytes, mime) {
+  const blob = new Blob([bytes], { type: mime || "application/octet-stream" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+// ---------- 极简 ZIP 打包（store ＋ 可选 deflate-raw）：用于"一键交回包" ----------
+const CRC_T = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(buf) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) c = CRC_T[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+async function deflateRaw(bytes) {
+  if (typeof CompressionStream === "undefined") return null;
+  try {
+    const s = new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+    return new Uint8Array(await new Response(s).arrayBuffer());
+  } catch (e) { return null; }
+}
+async function makeZip(entries) {
+  const now = new Date();
+  const tm = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xFFFF;
+  const dt = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xFFFF;
+  const parts = [], cdir = [];
+  let offset = 0;
+  for (const e of entries) {
+    const nameB = enc.encode(e.name);
+    const crc = crc32(e.bytes);
+    const comp = await deflateRaw(e.bytes);
+    const useDef = !!comp && comp.length < e.bytes.length;
+    const data = useDef ? comp : e.bytes;
+    const method = useDef ? 8 : 0;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+    lh.setUint16(8, method, true); lh.setUint16(10, tm, true); lh.setUint16(12, dt, true);
+    lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true);
+    lh.setUint32(22, e.bytes.length, true); lh.setUint16(26, nameB.length, true);
+    lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), nameB, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+    ch.setUint16(8, 0x0800, true); ch.setUint16(10, method, true);
+    ch.setUint16(12, tm, true); ch.setUint16(14, dt, true);
+    ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true);
+    ch.setUint32(24, e.bytes.length, true); ch.setUint16(28, nameB.length, true);
+    ch.setUint16(30, 0, true); ch.setUint16(32, 0, true); ch.setUint16(34, 0, true);
+    ch.setUint16(36, 0, true); ch.setUint32(38, 0, true); ch.setUint32(42, offset, true);
+    cdir.push(new Uint8Array(ch.buffer), nameB);
+    offset += 30 + nameB.length + data.length;
+  }
+  const cdSize = cdir.reduce((s, x) => s + x.length, 0);
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true); eocd.setUint16(4, 0, true); eocd.setUint16(6, 0, true);
+  eocd.setUint16(8, entries.length, true); eocd.setUint16(10, entries.length, true);
+  eocd.setUint32(12, cdSize, true); eocd.setUint32(16, offset, true); eocd.setUint16(20, 0, true);
+  const all = parts.concat(cdir, [new Uint8Array(eocd.buffer)]);
+  const out = new Uint8Array(all.reduce((s, x) => s + x.length, 0));
+  let p = 0;
+  all.forEach((x) => { out.set(x, p); p += x.length; });
+  return out;
 }
 function parseFragment() {
   const o = {};
@@ -633,6 +707,7 @@ async function exportBundle() {
     mainLog: logFor(payload.sentences, state.main),
     breaks: state.breaks || [],                       // 每 50 句的休息提示点（用于疲劳漂移检查）
     exportedFiles: state.exported || [],              // 实际导出了哪几个交回文件
+    zipExported: !!state.zipExported,                 // 是否用"一键交回包（ZIP）"导出过
     ctxNotes: { mode: "side-by-side" },               // 上下文面板形态（本轮固定并排）
   };
   return { mainCsv, trialCsv, calibMd, log };
@@ -678,7 +753,7 @@ async function doExport(kind) {
   }
 }
 function markExportList() {
-  const done = state.exported || [];
+  const done = state.zipExported ? ["main", "trial", "log", "calib"] : (state.exported || []);
   ui.exportList.querySelectorAll("li").forEach((li) => {
     const k = li.getAttribute("data-kind");
     const hit = done.includes(k);
@@ -686,8 +761,45 @@ function markExportList() {
     li.querySelector(".box").textContent = hit ? "☑" : "☐";
   });
   ui.exportListHint.textContent = done.length >= 4
-    ? "4／4 已导出 ✓ 请把四个文件都发给老师。"
+    ? (state.zipExported ? "4／4 ✓ 已打包成 ZIP，把那个压缩包发给老师即可。"
+                         : "4／4 已导出 ✓ 请把四个文件都发给老师。")
     : "已导出 " + done.length + "／4——还差 " + (4 - done.length) + " 个。";
+}
+// 一键交回包：把 4 个文件打进一个 ZIP（学生只需发一个文件）
+async function exportZip() {
+  try {
+    if (!mainReady) {
+      showToast("正在准备题库（" + mainPct + "%），马上就好…", true);
+      try { await loadMainBank(); } catch (e) {
+        hide(ui.toast);
+        alert("题库还没准备好：" + (mainErr || e) + "\n请检查网络后重试。");
+        return;
+      }
+      hide(ui.toast);
+    }
+    const b = await exportBundle();
+    const q = String.fromCharCode(34);
+    const base = "效度验证_标注员" + role + "_" + stamp();
+    const entries = [
+      { name: base + "_正式标注.csv", bytes: enc.encode(b.mainCsv) },
+      { name: base + "_试标集.csv", bytes: enc.encode(b.trialCsv) },
+      { name: base + "_过程日志.json", bytes: enc.encode(JSON.stringify(b.log, null, 1)) },
+      { name: base + "_校准记录.md", bytes: enc.encode(b.calibMd) },
+      { name: base + "_交回说明.txt", bytes: enc.encode(
+        "效度验证标注交回包（标注员 " + role + "）\r\n" +
+        "内含 4 个文件：正式标注 CSV ／ 试标集 CSV ／ 过程日志 JSON ／ 校准记录 md。\r\n" +
+        "请把整个压缩包直接发给老师（不要改名，不要只发截图）。\r\n") },
+    ];
+    const bytes = await makeZip(entries);
+    downloadBytes(base + "_交回包.zip", bytes, "application/zip");
+    state.zipExported = true;
+    state.exported = ["main", "trial", "log", "calib"];
+    markExportList();
+    save(true);
+  } catch (e) {
+    alert("打包失败：" + (e && e.message ? e.message : e) +
+          "\n请改点上面 4 个按钮逐个导出，并把这一页截图发给老师。");
+  }
 }
 function bindOnce() {
   if (bound) return;
@@ -711,6 +823,7 @@ function bindOnce() {
   ui.csvTrial.addEventListener("click", () => doExport("trial"));
   ui.jsonLog.addEventListener("click", () => doExport("log"));
   ui.csvCalib.addEventListener("click", () => doExport("calib"));
+  ui.zipAll.addEventListener("click", () => exportZip());
   ui.ctxToggle.addEventListener("click", () => {
     const c = ui.ctxBody.classList.toggle("collapsed");
     ui.ctxToggle.textContent = c ? "展开" : "收起";
