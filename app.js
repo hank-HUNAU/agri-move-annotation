@@ -261,8 +261,12 @@ function renderContext(rec) {
 function ctxScrollTo(el) {
   if (!el) return;
   const body = ui.ctxBody;
-  const r = el.getBoundingClientRect(), c = body.getBoundingClientRect();
-  body.scrollTop = Math.max(0, body.scrollTop + (r.top - c.top) - (c.height / 2 - r.height / 2));
+  if (body.scrollHeight > body.clientHeight + 4) {          // 窄屏：摘要框自己有滚动条
+    const r = el.getBoundingClientRect(), c = body.getBoundingClientRect();
+    body.scrollTop = Math.max(0, body.scrollTop + (r.top - c.top) - (c.height / 2 - r.height / 2));
+  } else {                                                  // 宽屏：用页面的滚动条（题目栏 sticky 不动）
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
 }
 function ctxJump(step) {
   const body = ui.ctxBody;

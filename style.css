@@ -35,15 +35,17 @@ body{
 .bar i{display:block; height:100%; width:0; background:linear-gradient(90deg,#1f6feb,#12b981); transition:width .25s ease}
 
 /* ---------- 布局 ---------- */
-main{max-width:1180px; margin:0 auto; padding:20px}
-.layout{display:grid; grid-template-columns:minmax(0,940px) minmax(360px,520px); gap:20px;
-  align-items:start; justify-content:center; max-width:1520px; margin:0 auto}
-@media (max-width:980px){ .layout{grid-template-columns:1fr} }
+/* 版式：宽屏下铺满可用宽度（与顶部栏同宽），左"题目/选项"占 2/3、右"摘要全文"占 1/3；
+   极宽屏（>2400px）留一个软上限，免得单行过长。 */
+main{max-width:2400px; margin:0 auto; padding:16px 26px 8px}
+.layout{display:grid; grid-template-columns:minmax(0,2fr) minmax(400px,1fr); gap:20px;
+  align-items:start; width:100%}
+@media (max-width:980px){ .layout{grid-template-columns:1fr} main{padding:14px} }
 .qhead-left{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
 
 .card{
   background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-  padding:20px; box-shadow:var(--shadow); margin-bottom:16px;
+  padding:20px; box-shadow:var(--shadow); margin-bottom:12px;
 }
 h1{font-size:20px; margin:0 0 10px}
 p{margin:.5em 0}
@@ -103,13 +105,17 @@ button.danger2{border-color:#f2b8b5; color:var(--err)}
 kbd{background:#fff; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 5px; font-size:12px}
 
 /* ---------- 摘要上下文 ---------- */
-.col-ctx{position:sticky; top:96px}
-@media (max-width:980px){ .col-ctx{position:static} }
+/* 两栏各自独立：题目栏不参与滚动；摘要栏高度放到接近整屏，
+   于是多数题目下"页面无滚动条、摘要框也无滚动条"（0 个）；只有摘要长于一屏时
+   才出现**一个**滚动条（在摘要框内部），页面与题目栏都不动。 */
+.col-main{position:static}
+.col-ctx{position:static}
 .ctxhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px}
 .ctxbody{
-  max-height:60vh; overflow:auto; font-size:14px; line-height:1.85; color:#333b49;
-  white-space:pre-wrap; word-break:break-word;
+  max-height:calc(100vh - 150px); overflow:auto; font-size:14px; line-height:1.85;
+  color:#333b49; white-space:pre-wrap; word-break:break-word;
 }
+@media (max-width:980px){ .ctxbody{max-height:60vh} }
 .ctxbody.collapsed{display:none}
 .ctxbody mark{background:var(--mark); padding:2px 3px; border-radius:4px; font-weight:600}
 .ctxbody .meta{color:var(--muted); font-size:12.5px; margin-bottom:8px; display:block}
@@ -144,7 +150,7 @@ kbd{background:#fff; border:1px solid var(--line); border-bottom-width:2px; bord
 .actions.wrap{flex-wrap:wrap}
 details.danger{margin-top:18px; border-top:1px solid var(--line); padding-top:12px}
 details.danger summary{cursor:pointer; color:var(--muted); font-size:13px}
-.foot{max-width:1180px; margin:0 auto; padding:8px 20px 40px; color:var(--muted); font-size:12.5px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+.foot{max-width:2400px; margin:0 auto; padding:4px 26px 10px; color:var(--muted); font-size:12.5px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
 /* ---------- 试标反馈页 ---------- */
 .h2{font-size:16px; margin:22px 0 8px}
 .tblwrap{overflow:auto; margin:10px 0 4px; border:1px solid var(--line); border-radius:10px}
