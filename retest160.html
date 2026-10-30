@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>160 句补测 — 中文期刊英文摘要</title>
+<link rel="stylesheet" href="retest160.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <strong>160 句补测</strong>
+    <span class="brand-sub">中文期刊 · 英文摘要</span>
+  </div>
+  <div class="topmeta">
+    <span id="roleBadge" class="badge" hidden></span>
+    <span id="progressText" class="mono">未开始</span>
+    <span id="saveText" class="muted small"></span>
+  </div>
+  <div class="progress"><i id="progressBar"></i></div>
+</header>
+
+<main class="page">
+  <section id="gate" class="card gate">
+    <p class="eyebrow">独立补测入口</p>
+    <h1>中文期刊英文摘要 · 160 句盲评</h1>
+    <p class="lead">本批用于复核「中文期刊·英文摘要」语步边界。题目中没有机器标签，A/B 题目顺序不同，请独立完成。</p>
+    <div id="gateErr" class="error" hidden></div>
+    <p id="gateMsg" class="muted">正在解析访问链接…</p>
+    <div id="gateForm" hidden>
+      <div class="field">
+        <label>标注员</label>
+        <div class="role-row">
+          <button class="role-btn" data-role="A">标注员 A</button>
+          <button class="role-btn" data-role="B">标注员 B</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="password">访问口令</label>
+        <input id="password" type="password" autocomplete="off" placeholder="请输入老师发给你的口令">
+      </div>
+      <button id="enterBtn" class="primary" disabled>进入补测</button>
+    </div>
+  </section>
+
+  <section id="rules" class="card" hidden>
+    <p class="eyebrow">开始前确认</p>
+    <h1>判定规则</h1>
+    <p class="lead">请根据句子的主要交际功能选择一个标签；连接词只是线索，不是判据。A/B 请独立判断，不讨论。</p>
+    <div id="ruleCards" class="rule-grid"></div>
+    <div class="note-box">
+      <strong>特别提醒</strong>
+      <ul>
+        <li>机器标签不会显示。</li>
+        <li>选择 <b>UN无法判定</b> 时必须在备注中写明原因。</li>
+        <li>中途可以关闭页面，重新打开同一链接会恢复进度；请固定使用同一浏览器。</li>
+      </ul>
+    </div>
+    <label class="checkline">
+      <input id="rulesAck" type="checkbox">
+      <span>我已阅读以上规则，理解本次任务与原有 20 句语步试标不同。</span>
+    </label>
+    <button id="startBtn" class="primary" disabled>确认规则，开始 160 句 →</button>
+  </section>
+
+  <section id="work" hidden>
+    <div class="work-layout">
+      <div class="question-column">
+        <article class="card question-card">
+          <div class="question-head">
+            <div>
+              <span id="qIndex" class="mono"></span>
+              <span id="qMeta" class="muted small"></span>
+            </div>
+            <button id="firstUnanswered" class="ghost small" type="button">定位未答项</button>
+          </div>
+          <p id="qText" class="sentence"></p>
+          <div id="labels" class="labels" role="group" aria-label="语步标签"></div>
+          <div class="field">
+            <label for="note">备注 <span class="muted small">（UN 必填）</span></label>
+            <div id="noteChips" class="chips">
+              <button type="button" class="chip" data-note="方法＋结果同句">方法＋结果同句</button>
+              <button type="button" class="chip" data-note="目的＋方法同句">目的＋方法同句</button>
+              <button type="button" class="chip" data-note="结果与结论难分">结果与结论难分</button>
+              <button type="button" class="chip" data-note="背景与目的难分">背景与目的难分</button>
+              <button type="button" class="chip" data-note="含结构化摘要小标题">含结构化摘要小标题</button>
+              <button type="button" class="chip" data-note="表述不完整／截断">表述不完整／截断</button>
+            </div>
+            <textarea id="note" rows="3" placeholder="可选；选 UN无法判定 时必须写明原因。"></textarea>
+          </div>
+          <div class="actions">
+            <button id="prevBtn" class="ghost" type="button">← 上一句</button>
+            <button id="nextBtn" class="primary" type="button">下一句 →</button>
+          </div>
+          <p class="keyboard">快捷键：<kbd>1</kbd>–<kbd>6</kbd> 选择标签，<kbd>Enter</kbd> 下一句。</p>
+        </article>
+      </div>
+      <aside class="context-column">
+        <article class="card context-card">
+          <div class="context-head">
+            <strong>摘要全文</strong>
+            <span class="muted small">当前句已高亮</span>
+          </div>
+          <div id="abstractText" class="abstract-text"></div>
+        </article>
+      </aside>
+    </div>
+  </section>
+
+  <section id="finish" class="card center-card" hidden>
+    <p class="eyebrow">全部完成</p>
+    <h1>160 / 160 已答</h1>
+    <p class="lead">请检查进度后提交并锁定。锁定后答案不可再修改。</p>
+    <div id="finishSummary" class="summary-grid"></div>
+    <button id="lockBtn" class="primary" type="button">提交并锁定</button>
+  </section>
+
+  <section id="export" class="card" hidden>
+    <p class="eyebrow">已提交并锁定</p>
+    <h1>导出交回包</h1>
+    <p class="lead">推荐直接下载 ZIP；压缩包内含下面四份文件。</p>
+    <div class="export-grid">
+      <button id="exportCsv" class="export-btn primary" type="button">① 补测判定 CSV</button>
+      <button id="exportLog" class="export-btn primary" type="button">② 过程日志 JSON</button>
+      <button id="exportRules" class="export-btn primary" type="button">③ 规则确认记录 MD</button>
+      <button id="exportManifest" class="export-btn primary" type="button">④ 数据完整性清单 MD</button>
+      <button id="exportZip" class="export-btn zip" type="button">一键导出交回包 ZIP</button>
+    </div>
+    <div id="exportSummary" class="summary-grid"></div>
+    <p id="exportHint" class="muted"></p>
+  </section>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+<footer class="footer">
+  <span>仅供本项目标注使用 · 请勿转发链接或题库</span>
+  <span id="versionText" class="mono"></span>
+</footer>
+<script src="retest160.js"></script>
+</body>
+</html>

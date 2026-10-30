@@ -1,0 +1,29 @@
+{
+  "schema": "agri-move-retest160-manifest/1",
+  "batch_id": "retest160_v121_20261031",
+  "built": "2026-10-31",
+  "questions": 160,
+  "roles": {
+    "A": {
+      "source": "E:\\Codex\\2026-09-24\\new-chat\\outputs\\效度验证补测_标注员A.csv",
+      "source_sha256": "4d25f6ec3f59cf51e39ae0b454fc0a8abe1feddbeda84c9a1b83e97c8fabf188",
+      "encrypted": "E:\\Codex\\2026-09-24\\new-chat\\anno-platform\\data\\enc_retest160_a.json",
+      "encrypted_sha256": "0458a1810a7d0b4fa80ffbb828a4e8924427d8cc4b3c45303d515619cd2d2f53",
+      "plain_sha256": "818eb220ade99ef725ae74380565220ff83ca245ee8c1a4e7380c092dd3dff43",
+      "questions": 160,
+      "abstracts": 154,
+      "distinct_sids": 160
+    },
+    "B": {
+      "source": "E:\\Codex\\2026-09-24\\new-chat\\outputs\\效度验证补测_标注员B.csv",
+      "source_sha256": "6bf8b20e552028b30c47a10f164c8eb886b5bc3d4feaed4deb7ac74091bb8d3c",
+      "encrypted": "E:\\Codex\\2026-09-24\\new-chat\\anno-platform\\data\\enc_retest160_b.json",
+      "encrypted_sha256": "e0e8298877f4fa75d41a449168138a4a377661acec78a75111217d2cd4257f2d",
+      "plain_sha256": "3aae37887c921ba3c10eee1eb4dcbfc36c1773302a3384eaa13c445ed6424c50",
+      "questions": 160,
+      "abstracts": 154,
+      "distinct_sids": 160
+    }
+  },
+  "order_identical": false
+}
